@@ -1,0 +1,3 @@
+# Ignore all CSS files except the one containing custom code
+css/
+!css/site.css
