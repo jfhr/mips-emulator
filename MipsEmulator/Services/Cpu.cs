@@ -62,12 +62,12 @@ namespace MipsEmulator.Services
         /// </summary>
         void Execute(FormatJ ins)
         {
-            uint iar_upper_4_bit = Pc & 0xF0000000;
+            uint pc_upper_4_bit = Pc & 0xF0000000;
             if (ins.Link)
             {
                 Link();
             }
-            Pc = iar_upper_4_bit | (ins.Address << 2);
+            Pc = pc_upper_4_bit | (ins.Address << 2);
         }
 
         /// <summary>
@@ -88,9 +88,12 @@ namespace MipsEmulator.Services
                 break;
             case 0b011010:  // div
             {
-                int result = (int)Registers[ins.Rs] / (int)Registers[ins.Rt];
+                int numerator = (int)Registers[ins.Rs];
+                int denominator = (int)Registers[ins.Rt];
+                int result =  numerator / denominator;
+                int remainder = numerator % denominator;
                 Registers.Lo = (uint)result;
-                Registers.Hi = Registers[ins.Rs] % Registers[ins.Rt];
+                Registers.Hi = (uint)remainder;
                 break;
             }
             case 0b011011:  // divu
@@ -183,44 +186,44 @@ namespace MipsEmulator.Services
                 }
                 break;
             case 0b000001:  // multiple branch instructions
-                switch (Registers[ins.Rt])
+                switch (ins.Rt)
                 {
                 case 0b00001:  // bgez
-                    if (Registers[ins.Rs] >= 0)
+                    if ((int)Registers[ins.Rs] >= 0)
                     {
                         BranchTo(ins.Value);
                     }
                     break;
                 case 0b10001:  // bgezal
-                    if (Registers[ins.Rs] >= 0)
+                    if ((int)Registers[ins.Rs] >= 0)
                     {
-                        BranchTo(ins.Value);
                         Link();
+                        BranchTo(ins.Value);
                     }
                     break;
                 case 0b00000:  // bltz
-                    if (Registers[ins.Rs] < 0)
+                    if ((int)Registers[ins.Rs] < 0)
                     {
                         BranchTo(ins.Value);
                     }
                     break;
                 case 0b10000:   // bltzal
-                    if (Registers[ins.Rs] < 0)
+                    if ((int)Registers[ins.Rs] < 0)
                     {
-                        BranchTo(ins.Value);
                         Link();
+                        BranchTo(ins.Value);
                     }
                     break;
                 }
                 break;
             case 0b000111:  // bgtz
-                if (Registers[ins.Rs] > 0)
+                if ((int)Registers[ins.Rs] > 0)
                 {
                     BranchTo(ins.Value);
                 }
                 break;
             case 0b000110:  // blez
-                if (Registers[ins.Rs] <= 0)
+                if ((int)Registers[ins.Rs] <= 0)
                 {
                     BranchTo(ins.Value);
                 }
