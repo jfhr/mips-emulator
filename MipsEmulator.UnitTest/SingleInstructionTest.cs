@@ -20,7 +20,7 @@ namespace MipsEmulator.UnitTest
 
 
         [TestMethod]
-        public void Jump()
+        public void J()
         {
             // jump to 100000 (2 trailing zeroes are implicit)
             target.Memory.StoreWord(0, 0b0000_1000_0000_0000_0000_0000_0000_1000);
@@ -31,7 +31,7 @@ namespace MipsEmulator.UnitTest
         }
 
         [TestMethod]
-        public void JumpAndLink()
+        public void JAL()
         {
             // jump to 100000 (2 trailing zeroes are implicit)
             // opcode 000011 means jump and link
@@ -46,7 +46,7 @@ namespace MipsEmulator.UnitTest
         }
 
         [TestMethod]
-        public void JumpRegister()
+        public void JR()
         {
             target.Registers.S0 = 0xDEADBEEF;
             // jump to the address in register  10_0000  ($s0)
@@ -58,7 +58,7 @@ namespace MipsEmulator.UnitTest
         }
 
         [TestMethod]
-        public void Add()
+        public void ADD()
         {
             target.Registers[4] = 123;
             target.Registers[5] = 234;
@@ -72,7 +72,7 @@ namespace MipsEmulator.UnitTest
 
         [TestMethod]
         [ExpectedException(typeof(OverflowException))]
-        public void Add_Overflow()
+        public void ADD_Overflow()
         {
             target.Registers[4] = int.MaxValue;
             target.Registers[5] = 234;
@@ -83,7 +83,7 @@ namespace MipsEmulator.UnitTest
         }
 
         [TestMethod]
-        public void AddImmediate()
+        public void ADDI()
         {
             target.Registers[4] = 123;
             var ins = new FormatI(0b00_1000, 4, 6, 234);
@@ -96,7 +96,7 @@ namespace MipsEmulator.UnitTest
 
         [TestMethod]
         [ExpectedException(typeof(OverflowException))]
-        public void AddImmediate_Overflow()
+        public void ADDI_Overflow()
         {
             target.Registers[4] = int.MaxValue;
             var ins = new FormatI(0b00_1000, 4, 6, 234);
@@ -106,7 +106,7 @@ namespace MipsEmulator.UnitTest
         }
 
         [TestMethod]
-        public void AddImmediateUnsigned()
+        public void ADDIU()
         {
             target.Registers[4] = 123;
             var ins = new FormatI(0b00_1001, 4, 6, 234);
@@ -118,7 +118,7 @@ namespace MipsEmulator.UnitTest
         }
 
         [TestMethod]
-        public void AddImmediateUnsigned_NoOverflow()
+        public void ADDIU_Overflow()
         {
             target.Registers[4] = int.MaxValue;
             var ins = new FormatI(0b00_1001, 4, 6, 234);
@@ -131,7 +131,7 @@ namespace MipsEmulator.UnitTest
 
 
         [TestMethod]
-        public void AddUnsigned()
+        public void ADDU()
         {
             target.Registers[4] = 123;
             target.Registers[5] = 234;
@@ -144,7 +144,7 @@ namespace MipsEmulator.UnitTest
         }
 
         [TestMethod]
-        public void AddUnsigned_NoOverflow()
+        public void ADDU_Overflow()
         {
             target.Registers[4] = int.MaxValue;
             target.Registers[5] = 234;
@@ -157,7 +157,7 @@ namespace MipsEmulator.UnitTest
         }
 
         [TestMethod]
-        public void And()
+        public void AND()
         {
             target.Registers[4] = 0b1101_0011;
             target.Registers[5] = 0b1001_1010;
@@ -171,7 +171,7 @@ namespace MipsEmulator.UnitTest
         }
 
         [TestMethod]
-        public void AndImmediate()
+        public void ANDI()
         {
             target.Registers[4] = 0b1101_0011;
             const uint inputVal = 0b1001_1010;
@@ -185,7 +185,7 @@ namespace MipsEmulator.UnitTest
         }
 
         [TestMethod]
-        public void BranchOnEqual_IsEqual()
+        public void BEQ_IsEqual()
         {
             target.Registers[4] = 123;
             target.Registers[5] = 123;
@@ -200,7 +200,7 @@ namespace MipsEmulator.UnitTest
         }
 
         [TestMethod]
-        public void BranchOnEqual_IsNotEqual()
+        public void BEQ_IsNotEqual()
         {
             target.Registers[4] = 123;
             target.Registers[5] = 900;
