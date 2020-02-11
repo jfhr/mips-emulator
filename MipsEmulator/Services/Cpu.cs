@@ -236,7 +236,7 @@ namespace MipsEmulator.Services
                 break;
             case 0b100000:  // lb
             {
-                uint address = ins.Value + (uint)ins.Rs;
+                uint address = ins.Value + Registers[ins.Rs];
                 Registers[ins.Rt] = Memory[address];
                 break;
             }
@@ -245,7 +245,7 @@ namespace MipsEmulator.Services
                 break;
             case 0b100011:  // lw
             {
-                uint address = ins.Value + (uint)ins.Rs;
+                uint address = ins.Value + Registers[ins.Rs];
                 Registers[ins.Rt] = Memory.LoadWord(address);
                 break;
             }
