@@ -62,6 +62,457 @@ namespace MipsEmulator.UnitTest
 
 
         [TestMethod]
+        public void ADD()
+        {
+            target.Registers[4] = 123;
+            target.Registers[5] = 234;
+            PushInstruction(new FormatR(4, 5, 6, 0, 0b10_0000));
+
+            target.FIE();
+
+            Assert.AreEqual(123u + 234u, target.Registers[6]);
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(OverflowException))]
+        public void ADD_Overflow()
+        {
+            target.Registers[4] = int.MaxValue;
+            target.Registers[5] = 234;
+            PushInstruction(new FormatR(4, 5, 6, 0, 0b10_0000));
+
+            target.FIE();
+        }
+
+        [TestMethod]
+        public void ADDI()
+        {
+            target.Registers[4] = 123;
+            PushInstruction(new FormatI(0b00_1000, 4, 6, 234));
+
+            target.FIE();
+
+            Assert.AreEqual(123u + 234u, target.Registers[6]);
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(OverflowException))]
+        public void ADDI_Overflow()
+        {
+            target.Registers[4] = int.MaxValue;
+            PushInstruction(new FormatI(0b00_1000, 4, 6, 234));
+
+            target.FIE();
+        }
+
+        [TestMethod]
+        public void ADDIU()
+        {
+            target.Registers[4] = 123;
+            PushInstruction(new FormatI(0b00_1001, 4, 6, 234));
+
+            target.FIE();
+
+            Assert.AreEqual(123u + 234u, target.Registers[6]);
+        }
+
+        [TestMethod]
+        public void ADDIU_Overflow()
+        {
+            target.Registers[4] = int.MaxValue;
+            PushInstruction(new FormatI(0b00_1001, 4, 6, 234));
+
+            target.FIE();
+
+            Assert.AreEqual(int.MaxValue + 234u, target.Registers[6]);
+        }
+
+
+        [TestMethod]
+        public void ADDU()
+        {
+            target.Registers[4] = 123;
+            target.Registers[5] = 234;
+            PushInstruction(new FormatR(4, 5, 6, 0, 0b10_0001));
+
+            target.FIE();
+
+            Assert.AreEqual(123u + 234u, target.Registers[6]);
+        }
+
+        [TestMethod]
+        public void ADDU_Overflow()
+        {
+            target.Registers[4] = int.MaxValue;
+            target.Registers[5] = 234;
+            PushInstruction(new FormatR(4, 5, 6, 0, 0b10_0001));
+
+            target.FIE();
+
+            Assert.AreEqual(int.MaxValue + 234u, target.Registers[6]);
+        }
+
+        [TestMethod]
+        public void AND()
+        {
+            target.Registers[4] = 0b1101_0011;
+            target.Registers[5] = 0b1001_1010;
+            const uint expected = 0b1001_0010;
+            PushInstruction(new FormatR(4, 5, 6, 0, 0b10_0100));
+
+            target.FIE();
+
+            Assert.AreEqual(expected, target.Registers[6]);
+        }
+
+        [TestMethod]
+        public void ANDI()
+        {
+            target.Registers[4] = 0b1101_0011;
+            const uint inputVal = 0b1001_1010;
+            const uint expected = 0b1001_0010;
+            PushInstruction(new FormatI(0b00_1100, 4, 6, inputVal));
+
+            target.FIE();
+
+            Assert.AreEqual(expected, target.Registers[6]);
+        }
+
+        [TestMethod]
+        public void BEQ_IsEqual()
+        {
+            target.Registers[4] = 123;
+            target.Registers[5] = 123;
+            const uint offset = 1024;
+            PushInstruction(new FormatI(0b00_0100, 4, 5, offset));
+
+            target.FIE();
+
+            AssertDidBranch(offset);
+        }
+
+        [TestMethod]
+        public void BEQ_IsNotEqual()
+        {
+            target.Registers[4] = 123;
+            target.Registers[5] = 900;
+            const uint offset = 1024;
+            PushInstruction(new FormatI(0b00_0100, 4, 5, offset));
+
+            target.FIE();
+
+            AssertDidNotBranch();
+        }
+
+        [TestMethod]
+        public void BGEZ_IsGreaterThanZero()
+        {
+            target.Registers[4] = 1;
+            const uint offset = 1024;
+            PushInstruction(new FormatI(0b00_0001, 4, 0b0_0001, offset));
+
+            target.FIE();
+
+            AssertDidBranch(offset);
+        }
+
+        [TestMethod]
+        public void BGEZ_IsZero()
+        {
+            target.Registers[4] = 0;
+            const uint offset = 1024;
+            PushInstruction(new FormatI(0b00_0001, 4, 0b0_0001, offset));
+
+            target.FIE();
+
+            AssertDidBranch(offset);
+        }
+
+        [TestMethod]
+        public void BGEZ_IsLessThanZero()
+        {
+            target.Registers[4] = 0xFFFFFFFF;  // -1
+            const uint offset = 1024;
+            PushInstruction(new FormatI(0b00_0001, 4, 0b0_0001, offset));
+
+            target.FIE();
+
+            AssertDidNotBranch();
+        }
+
+        [TestMethod]
+        public void BGEZAL_IsGreaterThanZero()
+        {
+            target.Registers[4] = 1;
+            const uint offset = 1024;
+            PushInstruction(new FormatI(0b00_0001, 4, 0b1_0001, offset));
+
+            target.FIE();
+
+            AssertDidBranchAndLink(offset);
+        }
+
+        [TestMethod]
+        public void BGEZAL_IsZero()
+        {
+            target.Registers[4] = 0;
+            const uint offset = 1024;
+            PushInstruction(new FormatI(0b00_0001, 4, 0b1_0001, offset));
+
+            target.FIE();
+
+            AssertDidBranchAndLink(offset);
+        }
+
+        [TestMethod]
+        public void BGEZAL_IsLessThanZero()
+        {
+            target.Registers[4] = 0xFFFFFFFF;  // -1
+            const uint offset = 1024;
+            PushInstruction(new FormatI(0b00_0001, 4, 0b1_0001, offset));
+
+            target.FIE();
+
+            AssertDidNotBranch();
+        }
+
+        [TestMethod]
+        public void BGTZ_IsGreaterThanZero()
+        {
+            target.Registers[4] = 1;
+            const uint offset = 1024;
+            PushInstruction(new FormatI(0b00_0111, 4, 0b0_0000, offset));
+
+            target.FIE();
+
+            AssertDidBranch(offset);
+        }
+
+        [TestMethod]
+        public void BGTZ_IsZero()
+        {
+            target.Registers[4] = 0;
+            const uint offset = 1024;
+            PushInstruction(new FormatI(0b00_0111, 4, 0b0_0000, offset));
+
+            target.FIE();
+
+            AssertDidNotBranch();
+        }
+
+        [TestMethod]
+        public void BGTZ_IsLessThanZero()
+        {
+            target.Registers[4] = 0xFFFFFFFF;  // -1
+            const uint offset = 1024;
+            PushInstruction(new FormatI(0b00_0111, 4, 0b0_0000, offset));
+
+            target.FIE();
+
+            AssertDidNotBranch();
+        }
+
+        [TestMethod]
+        public void BLEZ_IsGreaterThanZero()
+        {
+            target.Registers[4] = 1;
+            const uint offset = 1024;
+            PushInstruction(new FormatI(0b00_0110, 4, 0b0_0001, offset));
+
+            target.FIE();
+
+            AssertDidNotBranch();
+        }
+
+        [TestMethod]
+        public void BLEZ_IsZero()
+        {
+            target.Registers[4] = 0;
+            const uint offset = 1024;
+            PushInstruction(new FormatI(0b00_0110, 4, 0b0_0001, offset));
+
+            target.FIE();
+
+            AssertDidBranch(offset);
+        }
+
+        [TestMethod]
+        public void BLEZ_IsLessThanZero()
+        {
+            target.Registers[4] = 0xFFFFFFFF;  // -1
+            const uint offset = 1024;
+            PushInstruction(new FormatI(0b00_0110, 4, 0b0_0001, offset));
+
+            target.FIE();
+
+            AssertDidBranch(offset);
+        }
+
+        [TestMethod]
+        public void BLTZ_IsGreaterThanZero()
+        {
+            target.Registers[4] = 1;
+            const uint offset = 1024;
+            PushInstruction(new FormatI(0b00_0001, 4, 0b0_0000, offset));
+
+            target.FIE();
+
+            AssertDidNotBranch();
+        }
+
+        [TestMethod]
+        public void BLTZ_IsZero()
+        {
+            target.Registers[4] = 0;
+            const uint offset = 1024;
+            PushInstruction(new FormatI(0b00_0001, 4, 0b0_0000, offset));
+
+            target.FIE();
+
+            AssertDidNotBranch();
+        }
+
+        [TestMethod]
+        public void BLTZ_IsLessThanZero()
+        {
+            target.Registers[4] = 0xFFFFFFFF;  // -1
+            const uint offset = 1024;
+            PushInstruction(new FormatI(0b00_0001, 4, 0b0_0000, offset));
+
+            target.FIE();
+
+            AssertDidBranch(offset);
+        }
+
+        [TestMethod]
+        public void BLTZAL_IsGreaterThanZero()
+        {
+            target.Registers[4] = 1;
+            const uint offset = 1024;
+            PushInstruction(new FormatI(0b00_0001, 4, 0b1_0000, offset));
+
+            target.FIE();
+
+            AssertDidNotBranch();
+        }
+
+        [TestMethod]
+        public void BLTZAL_IsZero()
+        {
+            target.Registers[4] = 0;
+            const uint offset = 1024;
+            PushInstruction(new FormatI(0b00_0001, 4, 0b1_0000, offset));
+
+            target.FIE();
+
+            AssertDidNotBranch();
+        }
+
+        [TestMethod]
+        public void BLTZAL_IsLessThanZero()
+        {
+            target.Registers[4] = 0xFFFFFFFF;  // -1
+            const uint offset = 1024;
+            PushInstruction(new FormatI(0b00_0001, 4, 0b1_0000, offset));
+
+            target.FIE();
+
+            AssertDidBranchAndLink(offset);
+        }
+
+        [TestMethod]
+        public void BNE_IsEqual()
+        {
+            target.Registers[4] = 123;
+            target.Registers[5] = 123;
+            const uint offset = 1024;
+            PushInstruction(new FormatI(0b00_0101, 4, 5, offset));
+
+            target.FIE();
+
+            AssertDidNotBranch();
+        }
+
+        [TestMethod]
+        public void BNE_IsNotEqual()
+        {
+            target.Registers[4] = 123;
+            target.Registers[5] = 900;
+            const uint offset = 1024;
+            PushInstruction(new FormatI(0b00_0101, 4, 5, offset));
+
+            target.FIE();
+
+            AssertDidBranch(offset);
+        }
+
+        [TestMethod]
+        public void DIV()
+        {
+            // 220 : 12 = 18 R 4
+            target.Registers[4] = 220;
+            target.Registers[5] = 12;
+            PushInstruction(new FormatR(4, 5, 0, 0, 0b01_1010));
+
+            target.FIE();
+
+            Assert.AreEqual(18u, target.Registers.Lo);
+            Assert.AreEqual(4u, target.Registers.Hi);
+        }
+
+        [TestMethod]
+        public void DIV_NumeratorIsNegative()
+        {
+            target.Registers[4] = unchecked((uint)-220);
+            target.Registers[5] = 12;
+            PushInstruction(new FormatR(4, 5, 0, 0, 0b01_1010));
+
+            target.FIE();
+
+            Assert.AreEqual(unchecked((uint)-18), target.Registers.Lo);
+            Assert.AreEqual(unchecked((uint)-4), target.Registers.Hi);
+        }
+
+        [TestMethod]
+        public void DIV_DenominatorIsNegative()
+        {
+            target.Registers[4] = 220;
+            target.Registers[5] = unchecked((uint)-12);
+            PushInstruction(new FormatR(4, 5, 0, 0, 0b01_1010));
+
+            target.FIE();
+
+            Assert.AreEqual(unchecked((uint)-18), target.Registers.Lo);
+            Assert.AreEqual(4u, target.Registers.Hi);
+        }
+        [TestMethod]
+        public void DIV_BothAreNegative()
+        {
+            target.Registers[4] = unchecked((uint)-220);
+            target.Registers[5] = unchecked((uint)-12);
+            PushInstruction(new FormatR(4, 5, 0, 0, 0b01_1010));
+
+            target.FIE();
+
+            Assert.AreEqual(18u, target.Registers.Lo);
+            Assert.AreEqual(unchecked((uint)-4), target.Registers.Hi);
+        }
+
+        [TestMethod]
+        public void DIVU_NumeratorIsNegative()
+        {
+            // 4,294,967,295 : 12 = 357,913,941 R 3
+            target.Registers[4] = 4294967295;
+            target.Registers[5] = 12;
+            PushInstruction(new FormatR(4, 5, 0, 0, 0b01_1011));
+
+            target.FIE();
+
+            Assert.AreEqual(357_913_941u, target.Registers.Lo);
+            Assert.AreEqual(3u, target.Registers.Hi);
+        }
+
+        [TestMethod]
         public void J()
         {
             // jump to 100000 (2 trailing zeroes are implicit)
@@ -100,112 +551,25 @@ namespace MipsEmulator.UnitTest
         }
 
         [TestMethod]
-        public void ADD()
+        public void LB()
         {
-            target.Registers[4] = 123;
-            target.Registers[5] = 234;
-            var ins = new FormatR(4, 5, 6, 0, 0b10_0000);
-            PushInstruction(ins);
+            const uint address = 0xF00BA;
+            const byte value = 0xAB;
+            target.Memory[address] = value;
+            target.Registers[4] = address;
+            PushInstruction(new FormatI(0b10_0000, 4, 6, 0));
 
             target.FIE();
 
-            Assert.AreEqual(123u + 234u, target.Registers[6]);
+            Assert.AreEqual(value, target.Registers[6]);
         }
 
         [TestMethod]
-        [ExpectedException(typeof(OverflowException))]
-        public void ADD_Overflow()
+        public void LUI()
         {
-            target.Registers[4] = int.MaxValue;
-            target.Registers[5] = 234;
-            var ins = new FormatR(4, 5, 6, 0, 0b10_0000);
-            PushInstruction(ins);
-
-            target.FIE();
-        }
-
-        [TestMethod]
-        public void ADDI()
-        {
-            target.Registers[4] = 123;
-            var ins = new FormatI(0b00_1000, 4, 6, 234);
-            PushInstruction(ins);
-
-            target.FIE();
-
-            Assert.AreEqual(123u + 234u, target.Registers[6]);
-        }
-
-        [TestMethod]
-        [ExpectedException(typeof(OverflowException))]
-        public void ADDI_Overflow()
-        {
-            target.Registers[4] = int.MaxValue;
-            var ins = new FormatI(0b00_1000, 4, 6, 234);
-            PushInstruction(ins);
-
-            target.FIE();
-        }
-
-        [TestMethod]
-        public void ADDIU()
-        {
-            target.Registers[4] = 123;
-            var ins = new FormatI(0b00_1001, 4, 6, 234);
-            PushInstruction(ins);
-
-            target.FIE();
-
-            Assert.AreEqual(123u + 234u, target.Registers[6]);
-        }
-
-        [TestMethod]
-        public void ADDIU_Overflow()
-        {
-            target.Registers[4] = int.MaxValue;
-            var ins = new FormatI(0b00_1001, 4, 6, 234);
-            PushInstruction(ins);
-
-            target.FIE();
-
-            Assert.AreEqual(int.MaxValue + 234u, target.Registers[6]);
-        }
-
-
-        [TestMethod]
-        public void ADDU()
-        {
-            target.Registers[4] = 123;
-            target.Registers[5] = 234;
-            var ins = new FormatR(4, 5, 6, 0, 0b10_0001);
-            PushInstruction(ins);
-
-            target.FIE();
-
-            Assert.AreEqual(123u + 234u, target.Registers[6]);
-        }
-
-        [TestMethod]
-        public void ADDU_Overflow()
-        {
-            target.Registers[4] = int.MaxValue;
-            target.Registers[5] = 234;
-            var ins = new FormatR(4, 5, 6, 0, 0b10_0001);
-            PushInstruction(ins);
-
-            target.FIE();
-
-            Assert.AreEqual(int.MaxValue + 234u, target.Registers[6]);
-        }
-
-        [TestMethod]
-        public void AND()
-        {
-            target.Registers[4] = 0b1101_0011;
-            target.Registers[5] = 0b1001_1010;
-            const uint expected = 0b1001_0010;
-            var ins = new FormatR(4, 5, 6, 0, 0b10_0100);
-            PushInstruction(ins);
+            const uint value = 0xabcd;
+            const uint expected = value << 16;
+            PushInstruction(new FormatI(0b00_1111, 0, 6, value));
 
             target.FIE();
 
@@ -213,378 +577,95 @@ namespace MipsEmulator.UnitTest
         }
 
         [TestMethod]
-        public void ANDI()
+        public void LW()
         {
-            target.Registers[4] = 0b1101_0011;
-            const uint inputVal = 0b1001_1010;
-            const uint expected = 0b1001_0010;
-            var ins = new FormatI(0b00_1100, 4, 6, inputVal);
-            PushInstruction(ins);
+            const uint address = 0xF00BA;
+            const uint value = 0xDEADBEEF;
+            target.Memory.StoreWord(address, value);
+            target.Registers[4] = address;
+            PushInstruction(new FormatI(0b10_0011, 4, 6, 0));
 
             target.FIE();
 
-            Assert.AreEqual(expected, target.Registers[6]);
+            Assert.AreEqual(value, target.Registers[6]);
         }
 
         [TestMethod]
-        public void BEQ_IsEqual()
+        public void MFHI()
         {
-            target.Registers[4] = 123;
-            target.Registers[5] = 123;
-            const uint offset = 1024;
-            var ins = new FormatI(0b00_0100, 4, 5, offset);
-            PushInstruction(ins);
+            const uint value = 0xDEADBEEF;
+            target.Registers.Hi = value;
+            PushInstruction(new FormatR(0, 0, 6, 0, 0b01_0000));
 
             target.FIE();
 
-            AssertDidBranch(offset);
+            Assert.AreEqual(value, target.Registers[6]);
+        }
+        
+        [TestMethod]
+        public void MFLO()
+        {
+            const uint value = 0xDEADBEEF;
+            target.Registers.Lo = value;
+            PushInstruction(new FormatR(0, 0, 6, 0, 0b01_0010));
+
+            target.FIE();
+
+            Assert.AreEqual(value, target.Registers[6]);
+        }
+        
+        [TestMethod]
+        public void MULT()
+        {
+            // 0x1BADC0DE * 0x0DEDF00D = 0x1818C9B_2028EB46
+            target.Registers[4] = 0x1BADC0DE;
+            target.Registers[5] = 0x0DEDF00D;
+            PushInstruction(new FormatR(4, 5, 0, 0, 0b01_1000));
+
+            target.FIE();
+
+            Assert.AreEqual(0x2028EB46u, target.Registers.Lo);
+            Assert.AreEqual(0x1818C9Bu, target.Registers.Hi);
         }
 
         [TestMethod]
-        public void BEQ_IsNotEqual()
+        public void MULT_OneFactorIsNegative()
         {
-            target.Registers[4] = 123;
-            target.Registers[5] = 900;
-            const uint offset = 1024;
-            var ins = new FormatI(0b00_0100, 4, 5, offset);
-            PushInstruction(ins);
+            target.Registers[4] = unchecked((uint)-0x1BADC0DE);
+            target.Registers[5] = 0x0DEDF00D;
+            PushInstruction(new FormatR(4, 5, 0, 0, 0b01_1000));
 
             target.FIE();
-
-            AssertDidNotBranch();
+            
+            Assert.AreEqual(0xDFD714BAu, target.Registers.Lo);
+            Assert.AreEqual(0xFE7E7364u, target.Registers.Hi);
         }
 
         [TestMethod]
-        public void BGEZ_IsGreaterThanZero()
+        public void MULT_BothAreNegative()
         {
-            target.Registers[4] = 1;
-            const uint offset = 1024;
-            var ins = new FormatI(0b00_0001, 4, 0b0_0001, offset);
-            PushInstruction(ins);
+            target.Registers[4] = unchecked((uint)-0x1BADC0DE);
+            target.Registers[5] = unchecked((uint)-0x0DEDF00D);
+            PushInstruction(new FormatR(4, 5, 0, 0, 0b01_1000));
 
             target.FIE();
 
-            AssertDidBranch(offset);
+            Assert.AreEqual(0x2028EB46u, target.Registers.Lo);
+            Assert.AreEqual(0x1818C9Bu, target.Registers.Hi);
         }
 
         [TestMethod]
-        public void BGEZ_IsZero()
+        public void MULTU_FactorIsNegative()
         {
-            target.Registers[4] = 0;
-            const uint offset = 1024;
-            var ins = new FormatI(0b00_0001, 4, 0b0_0001, offset);
-            PushInstruction(ins);
+            // 0xDEADBEEF * 0xFEEDC0DE = 0xDDBF320E_4F21D342
+            target.Registers[4] = 0xDEADBEEF;
+            target.Registers[5] = 0xFEEDC0DE;
+            PushInstruction(new FormatR(4, 5, 0, 0, 0b01_1001));
 
             target.FIE();
 
-            AssertDidBranch(offset);
-        }
-
-        [TestMethod]
-        public void BGEZ_IsLessThanZero()
-        {
-            target.Registers[4] = 0xFFFFFFFF;  // -1
-            const uint offset = 1024;
-            var ins = new FormatI(0b00_0001, 4, 0b0_0001, offset);
-            PushInstruction(ins);
-
-            target.FIE();
-
-            AssertDidNotBranch();
-        }
-
-        [TestMethod]
-        public void BGEZAL_IsGreaterThanZero()
-        {
-            target.Registers[4] = 1;
-            const uint offset = 1024;
-            var ins = new FormatI(0b00_0001, 4, 0b1_0001, offset);
-            PushInstruction(ins);
-
-            target.FIE();
-
-            AssertDidBranchAndLink(offset);
-        }
-
-        [TestMethod]
-        public void BGEZAL_IsZero()
-        {
-            target.Registers[4] = 0;
-            const uint offset = 1024;
-            var ins = new FormatI(0b00_0001, 4, 0b1_0001, offset);
-            PushInstruction(ins);
-
-            target.FIE();
-
-            AssertDidBranchAndLink(offset);
-        }
-
-        [TestMethod]
-        public void BGEZAL_IsLessThanZero()
-        {
-            target.Registers[4] = 0xFFFFFFFF;  // -1
-            const uint offset = 1024;
-            var ins = new FormatI(0b00_0001, 4, 0b1_0001, offset);
-            PushInstruction(ins);
-
-            target.FIE();
-
-            AssertDidNotBranch();
-        }
-
-        [TestMethod]
-        public void BGTZ_IsGreaterThanZero()
-        {
-            target.Registers[4] = 1;
-            const uint offset = 1024;
-            var ins = new FormatI(0b00_0111, 4, 0b0_0000, offset);
-            PushInstruction(ins);
-
-            target.FIE();
-
-            AssertDidBranch(offset);
-        }
-
-        [TestMethod]
-        public void BGTZ_IsZero()
-        {
-            target.Registers[4] = 0;
-            const uint offset = 1024;
-            var ins = new FormatI(0b00_0111, 4, 0b0_0000, offset);
-            PushInstruction(ins);
-
-            target.FIE();
-
-            AssertDidNotBranch();
-        }
-
-        [TestMethod]
-        public void BGTZ_IsLessThanZero()
-        {
-            target.Registers[4] = 0xFFFFFFFF;  // -1
-            const uint offset = 1024;
-            var ins = new FormatI(0b00_0111, 4, 0b0_0000, offset);
-            PushInstruction(ins);
-
-            target.FIE();
-
-            AssertDidNotBranch();
-        }
-
-        [TestMethod]
-        public void BLEZ_IsGreaterThanZero()
-        {
-            target.Registers[4] = 1;
-            const uint offset = 1024;
-            var ins = new FormatI(0b00_0110, 4, 0b0_0001, offset);
-            PushInstruction(ins);
-
-            target.FIE();
-
-            AssertDidNotBranch();
-        }
-
-        [TestMethod]
-        public void BLEZ_IsZero()
-        {
-            target.Registers[4] = 0;
-            const uint offset = 1024;
-            var ins = new FormatI(0b00_0110, 4, 0b0_0001, offset);
-            PushInstruction(ins);
-
-            target.FIE();
-
-            AssertDidBranch(offset);
-        }
-
-        [TestMethod]
-        public void BLEZ_IsLessThanZero()
-        {
-            target.Registers[4] = 0xFFFFFFFF;  // -1
-            const uint offset = 1024;
-            var ins = new FormatI(0b00_0110, 4, 0b0_0001, offset);
-            PushInstruction(ins);
-
-            target.FIE();
-
-            AssertDidBranch(offset);
-        }
-
-        [TestMethod]
-        public void BLTZ_IsGreaterThanZero()
-        {
-            target.Registers[4] = 1;
-            const uint offset = 1024;
-            var ins = new FormatI(0b00_0001, 4, 0b0_0000, offset);
-            PushInstruction(ins);
-
-            target.FIE();
-
-            AssertDidNotBranch();
-        }
-
-        [TestMethod]
-        public void BLTZ_IsZero()
-        {
-            target.Registers[4] = 0;
-            const uint offset = 1024;
-            var ins = new FormatI(0b00_0001, 4, 0b0_0000, offset);
-            PushInstruction(ins);
-
-            target.FIE();
-
-            AssertDidNotBranch();
-        }
-
-        [TestMethod]
-        public void BLTZ_IsLessThanZero()
-        {
-            target.Registers[4] = 0xFFFFFFFF;  // -1
-            const uint offset = 1024;
-            var ins = new FormatI(0b00_0001, 4, 0b0_0000, offset);
-            PushInstruction(ins);
-
-            target.FIE();
-
-            AssertDidBranch(offset);
-        }
-
-        [TestMethod]
-        public void BLTZAL_IsGreaterThanZero()
-        {
-            target.Registers[4] = 1;
-            const uint offset = 1024;
-            var ins = new FormatI(0b00_0001, 4, 0b1_0000, offset);
-            PushInstruction(ins);
-
-            target.FIE();
-
-            AssertDidNotBranch();
-        }
-
-        [TestMethod]
-        public void BLTZAL_IsZero()
-        {
-            target.Registers[4] = 0;
-            const uint offset = 1024;
-            var ins = new FormatI(0b00_0001, 4, 0b1_0000, offset);
-            PushInstruction(ins);
-
-            target.FIE();
-
-            AssertDidNotBranch();
-        }
-
-        [TestMethod]
-        public void BLTZAL_IsLessThanZero()
-        {
-            target.Registers[4] = 0xFFFFFFFF;  // -1
-            const uint offset = 1024;
-            var ins = new FormatI(0b00_0001, 4, 0b1_0000, offset);
-            PushInstruction(ins);
-
-            target.FIE();
-
-            AssertDidBranchAndLink(offset);
-        }
-
-        [TestMethod]
-        public void BNE_IsEqual()
-        {
-            target.Registers[4] = 123;
-            target.Registers[5] = 123;
-            const uint offset = 1024;
-            var ins = new FormatI(0b00_0101, 4, 5, offset);
-            PushInstruction(ins);
-
-            target.FIE();
-
-            AssertDidNotBranch();
-        }
-
-        [TestMethod]
-        public void BNE_IsNotEqual()
-        {
-            target.Registers[4] = 123;
-            target.Registers[5] = 900;
-            const uint offset = 1024;
-            var ins = new FormatI(0b00_0101, 4, 5, offset);
-            PushInstruction(ins);
-
-            target.FIE();
-
-            AssertDidBranch(offset);
-        }
-
-        [TestMethod]
-        public void DIV()
-        {
-            // 220 : 12 = 18 R 4
-            target.Registers[4] = 220;
-            target.Registers[5] = 12;
-            var ins = new FormatR(4, 5, 0, 0, 0b01_1010);
-            PushInstruction(ins);
-
-            target.FIE();
-
-            Assert.AreEqual(18u, target.Registers.Lo);
-            Assert.AreEqual(4u, target.Registers.Hi);
-        }
-
-        [TestMethod]
-        public void DIV_NumeratorIsNegative()
-        {
-            target.Registers[4] = unchecked((uint)-220);
-            target.Registers[5] = 12;
-            var ins = new FormatR(4, 5, 0, 0, 0b01_1010);
-            PushInstruction(ins);
-
-            target.FIE();
-
-            Assert.AreEqual(unchecked((uint)-18), target.Registers.Lo);
-            Assert.AreEqual(unchecked((uint)-4), target.Registers.Hi);
-        }
-
-        [TestMethod]
-        public void DIV_DenominatorIsNegative()
-        {
-            target.Registers[4] = 220;
-            target.Registers[5] = unchecked((uint)-12);
-            var ins = new FormatR(4, 5, 0, 0, 0b01_1010);
-            PushInstruction(ins);
-
-            target.FIE();
-
-            Assert.AreEqual(unchecked((uint)-18), target.Registers.Lo);
-            Assert.AreEqual(4u, target.Registers.Hi);
-        }
-        [TestMethod]
-        public void DIV_BothAreNegative()
-        {
-            target.Registers[4] = unchecked((uint)-220);
-            target.Registers[5] = unchecked((uint)-12);
-            var ins = new FormatR(4, 5, 0, 0, 0b01_1010);
-            PushInstruction(ins);
-
-            target.FIE();
-
-            Assert.AreEqual(18u, target.Registers.Lo);
-            Assert.AreEqual(unchecked((uint)-4), target.Registers.Hi);
-        }
-
-        [TestMethod]
-        public void DIVU_NumeratorIsNegative()
-        {
-            // 4,294,967,295 : 12 = 357,913,941 R 3
-            target.Registers[4] = 4294967295;
-            target.Registers[5] = 12;
-            var ins = new FormatR(4, 5, 0, 0, 0b01_1011);
-            PushInstruction(ins);
-
-            target.FIE();
-
-            Assert.AreEqual(357_913_941u, target.Registers.Lo);
-            Assert.AreEqual(3u, target.Registers.Hi);
+            Assert.AreEqual(0xDDBF320Eu, target.Registers.Hi);
+            Assert.AreEqual(0x4F21D342u, target.Registers.Lo);
         }
     }
 }
