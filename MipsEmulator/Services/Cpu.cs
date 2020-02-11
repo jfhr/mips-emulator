@@ -113,7 +113,11 @@ namespace MipsEmulator.Services
                 break;
             case 0b011000:  // mult
             {
-                long result = (int)Registers[ins.Rs] * (int)Registers[ins.Rt];
+                // First convert to Int32, then to Int64
+                // If we convert directly UInt32 -> Int64, we get the unsigned value.
+                int signedS = (int)Registers[ins.Rs];
+                int signedT = (int)Registers[ins.Rt];
+                long result = (long)signedS * signedT;
                 Registers.Lo = (uint)result;
                 Registers.Hi = (uint)(result >> 32);
                 break;
