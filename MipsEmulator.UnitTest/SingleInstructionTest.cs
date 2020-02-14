@@ -655,6 +655,20 @@ namespace MipsEmulator.UnitTest
         }
 
         [TestMethod]
+        public void MULTU()
+        {
+            // 0x1BADC0DE * 0x0DEDF00D = 0x1818C9B_2028EB46
+            target.Registers[4] = 0x1BADC0DE;
+            target.Registers[5] = 0x0DEDF00D;
+            PushInstruction(new FormatR(4, 5, 0, 0, 0b01_1001));
+
+            target.FIE();
+
+            Assert.AreEqual(0x2028EB46u, target.Registers.Lo);
+            Assert.AreEqual(0x1818C9Bu, target.Registers.Hi);
+        }
+
+        [TestMethod]
         public void MULTU_FactorIsNegative()
         {
             // 0xDEADBEEF * 0xFEEDC0DE = 0xDDBF320E_4F21D342
@@ -666,6 +680,46 @@ namespace MipsEmulator.UnitTest
 
             Assert.AreEqual(0xDDBF320Eu, target.Registers.Hi);
             Assert.AreEqual(0x4F21D342u, target.Registers.Lo);
+        }
+        
+        [TestMethod]
+        public void OR()
+        {
+            target.Registers[4] = 0b1101_0011;
+            target.Registers[5] = 0b1001_1010;
+            const uint expected = 0b1101_1011;
+            PushInstruction(new FormatR(4, 5, 6, 0, 0b10_0101));
+
+            target.FIE();
+
+            Assert.AreEqual(expected, target.Registers[6]);
+        }
+
+        [TestMethod]
+        public void ORI()
+        {
+            target.Registers[4] = 0b1101_0011;
+            const uint inputVal = 0b1001_1010;
+            const uint expected = 0b1101_1011;
+            PushInstruction(new FormatI(0b00_1101, 4, 6, inputVal));
+
+            target.FIE();
+
+            Assert.AreEqual(expected, target.Registers[6]);
+        }
+        
+        [TestMethod]
+        public void SB()
+        {
+            const uint address = 0xF00BA;
+            const byte value = 0xAB;
+            target.Registers[4] = address;
+            target.Registers[6] = value;
+            PushInstruction(new FormatI(0b10_1000, 4, 6, 0));
+
+            target.FIE();
+
+            Assert.AreEqual(value, target.Memory[address]);
         }
     }
 }
