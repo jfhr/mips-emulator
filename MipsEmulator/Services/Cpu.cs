@@ -130,7 +130,7 @@ namespace MipsEmulator.Services
                 break;
             }
             case 0b100101:  // or
-                Registers[ins.Rd] = Registers[ins.Rs] | Registers[ins.Rd];
+                Registers[ins.Rd] = Registers[ins.Rs] | Registers[ins.Rt];
                 break;
             case 0b000000:  // sll
                 Registers[ins.Rd] = Registers[ins.Rt] << ins.Shamt;
@@ -258,8 +258,8 @@ namespace MipsEmulator.Services
                 break;
             case 0b101000:  // sb
             {
-                uint address = ins.Value + (uint)ins.Rs;
-                Memory[address] = (byte)ins.Rt;
+                uint address = ins.Value + Registers[ins.Rs];
+                Memory[address] = (byte)Registers[ins.Rt];
                 break;
             }
             case 0b001010:  // slti
