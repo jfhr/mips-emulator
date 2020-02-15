@@ -127,7 +127,6 @@ namespace MipsEmulator.UnitTest
             Assert.AreEqual(int.MaxValue + 234u, target.Registers[6]);
         }
 
-
         [TestMethod]
         public void ADDU()
         {
@@ -601,7 +600,7 @@ namespace MipsEmulator.UnitTest
 
             Assert.AreEqual(value, target.Registers[6]);
         }
-        
+
         [TestMethod]
         public void MFLO()
         {
@@ -613,7 +612,7 @@ namespace MipsEmulator.UnitTest
 
             Assert.AreEqual(value, target.Registers[6]);
         }
-        
+
         [TestMethod]
         public void MULT()
         {
@@ -636,7 +635,7 @@ namespace MipsEmulator.UnitTest
             PushInstruction(new FormatR(4, 5, 0, 0, 0b01_1000));
 
             target.FIE();
-            
+
             Assert.AreEqual(0xDFD714BAu, target.Registers.Lo);
             Assert.AreEqual(0xFE7E7364u, target.Registers.Hi);
         }
@@ -681,7 +680,7 @@ namespace MipsEmulator.UnitTest
             Assert.AreEqual(0xDDBF320Eu, target.Registers.Hi);
             Assert.AreEqual(0x4F21D342u, target.Registers.Lo);
         }
-        
+
         [TestMethod]
         public void OR()
         {
@@ -707,7 +706,7 @@ namespace MipsEmulator.UnitTest
 
             Assert.AreEqual(expected, target.Registers[6]);
         }
-        
+
         [TestMethod]
         public void SB()
         {
@@ -720,6 +719,457 @@ namespace MipsEmulator.UnitTest
             target.FIE();
 
             Assert.AreEqual(value, target.Memory[address]);
+        }
+
+        [TestMethod]
+        public void SLL()
+        {
+            const uint value = 0b1101_0011;
+            const int shamt = 1;
+            const uint expected = 0b1_1010_0110;
+            target.Registers[4] = value;
+            PushInstruction(new FormatR(0, 4, 6, shamt, 0b00_0000));
+
+            target.FIE();
+
+            Assert.AreEqual(expected, target.Registers[6]);
+        }
+
+        [TestMethod]
+        public void SLL_ShiftBy3()
+        {
+            const uint value = 0b1101_0011;
+            const int shamt = 3;
+            const uint expected = 0b110_1001_1000;
+            target.Registers[4] = value;
+            PushInstruction(new FormatR(0, 4, 6, shamt, 0b00_0000));
+
+            target.FIE();
+
+            Assert.AreEqual(expected, target.Registers[6]);
+        }
+
+        [TestMethod]
+        public void SLLV()
+        {
+            const uint value = 0b1101_0011;
+            const int shamt = 1;
+            const uint expected = 0b1_1010_0110;
+            target.Registers[4] = value;
+            target.Registers[5] = shamt;
+            PushInstruction(new FormatR(5, 4, 6, 0, 0b00_0100));
+
+            target.FIE();
+
+            Assert.AreEqual(expected, target.Registers[6]);
+        }
+
+        [TestMethod]
+        public void SLLV_ShiftBy3()
+        {
+            const uint value = 0b1101_0011;
+            const int shamt = 3;
+            const uint expected = 0b110_1001_1000;
+            target.Registers[4] = value;
+            target.Registers[5] = shamt;
+            PushInstruction(new FormatR(5, 4, 6, 0, 0b00_0100));
+
+            target.FIE();
+
+            Assert.AreEqual(expected, target.Registers[6]);
+        }
+
+        [TestMethod]
+        public void SLT_IsLessThan()
+        {
+            const uint greaterValue = 7800;
+            const uint lesserValue = 2400;
+            target.Registers[4] = lesserValue;
+            target.Registers[5] = greaterValue;
+            PushInstruction(new FormatR(4, 5, 6, 0, 0b10_1010));
+
+            target.FIE();
+
+            Assert.AreEqual(1u, target.Registers[6]);
+        }
+
+        [TestMethod]
+        public void SLT_IsGreaterThan()
+        {
+            const uint greaterValue = 7800;
+            const uint lesserValue = 2400;
+            target.Registers[4] = greaterValue;
+            target.Registers[5] = lesserValue;
+            PushInstruction(new FormatR(4, 5, 6, 0, 0b10_1010));
+
+            target.FIE();
+
+            Assert.AreEqual(0u, target.Registers[6]);
+        }
+
+        [TestMethod]
+        public void SLT_AreEqual()
+        {
+            const uint value = 2400;
+            target.Registers[4] = value;
+            target.Registers[5] = value;
+            PushInstruction(new FormatR(4, 5, 6, 0, 0b10_1010));
+
+            target.FIE();
+
+            Assert.AreEqual(0u, target.Registers[6]);
+        }
+        [TestMethod]
+
+        public void SLT_NegativeIsLessThanPositive()
+        {
+            const uint greaterValue = 2400;
+            const uint lesserValue = unchecked((uint)-7800);
+            target.Registers[4] = lesserValue;
+            target.Registers[5] = greaterValue;
+            PushInstruction(new FormatR(4, 5, 6, 0, 0b10_1010));
+
+            target.FIE();
+
+            Assert.AreEqual(1u, target.Registers[6]);
+        }
+
+        [TestMethod]
+        public void SLT_NegativeIsLessThanNegative()
+        {
+            const uint greaterValue = unchecked((uint)-2400);
+            const uint lesserValue = unchecked((uint)-7800);
+            target.Registers[4] = greaterValue;
+            target.Registers[5] = lesserValue;
+            PushInstruction(new FormatR(4, 5, 6, 0, 0b10_1010));
+
+            target.FIE();
+
+            Assert.AreEqual(0u, target.Registers[6]);
+        }
+
+        [TestMethod]
+        public void SLTI_IsLessThan()
+        {
+            const uint greaterValue = 7800;
+            const uint lesserValue = 2400;
+            target.Registers[4] = lesserValue;
+            PushInstruction(new FormatI(0b00_1010, 4, 6, greaterValue));
+
+            target.FIE();
+
+            Assert.AreEqual(1u, target.Registers[6]);
+        }
+
+        [TestMethod]
+        public void SLTI_IsGreaterThan()
+        {
+            const uint greaterValue = 7800;
+            const uint lesserValue = 2400;
+            target.Registers[4] = greaterValue;
+            PushInstruction(new FormatI(0b00_1010, 4, 6, lesserValue));
+
+            target.FIE();
+
+            Assert.AreEqual(0u, target.Registers[6]);
+        }
+
+        [TestMethod]
+        public void SLTI_AreEqual()
+        {
+            const uint value = 7800;
+            target.Registers[4] = value;
+            PushInstruction(new FormatI(0b00_1010, 4, 6, value));
+
+           target.FIE();
+
+            Assert.AreEqual(0u, target.Registers[6]);
+        }
+
+        [TestMethod]
+        public void SLTU_IsLessThan()
+        {
+            const uint greaterValue = 7800;
+            const uint lesserValue = 2400;
+            target.Registers[4] = lesserValue;
+            target.Registers[5] = greaterValue;
+            PushInstruction(new FormatR(4, 5, 6, 0, 0b10_1011));
+
+            target.FIE();
+
+            Assert.AreEqual(1u, target.Registers[6]);
+        }
+
+        [TestMethod]
+        public void SLTU_IsGreaterThan()
+        {
+            const uint greaterValue = 7800;
+            const uint lesserValue = 2400;
+            target.Registers[4] = greaterValue;
+            target.Registers[5] = lesserValue;
+            PushInstruction(new FormatR(4, 5, 6, 0, 0b10_1011));
+
+            target.FIE();
+
+            Assert.AreEqual(0u, target.Registers[6]);
+        }
+
+        [TestMethod]
+        public void SLTU_AreEqual()
+        {
+            const uint value = 2400;
+            target.Registers[4] = value;
+            target.Registers[5] = value;
+            PushInstruction(new FormatR(4, 5, 6, 0, 0b10_1011));
+
+            target.FIE();
+
+            Assert.AreEqual(0u, target.Registers[6]);
+        }
+
+        [TestMethod]
+
+        public void SLTU_NegativeIsGreaterThanPositive()
+        {
+            // the 'negative' number is greater bc it is interpreted as unsigned
+            const uint greaterValue = unchecked((uint)-7800);
+            const uint lesserValue = 2400;
+            target.Registers[4] = lesserValue;
+            target.Registers[5] = greaterValue;
+            PushInstruction(new FormatR(4, 5, 6, 0, 0b10_1011));
+
+            target.FIE();
+
+            Assert.AreEqual(1u, target.Registers[6]);
+        }
+
+        [TestMethod]
+        public void SLTU_NegativeIsLessThanNegative()
+        {
+            const uint greaterValue = unchecked((uint)-2400);
+            const uint lesserValue = unchecked((uint)-7800);
+            target.Registers[4] = greaterValue;
+            target.Registers[5] = lesserValue;
+            PushInstruction(new FormatR(4, 5, 6, 0, 0b10_1011));
+
+            target.FIE();
+
+            Assert.AreEqual(0u, target.Registers[6]);
+        }
+
+        [TestMethod]
+        public void SLTIU_IsLessThan()
+        {
+            const uint greaterValue = 7800;
+            const uint lesserValue = 2400;
+            target.Registers[4] = lesserValue;
+            PushInstruction(new FormatI(0b00_1011, 4, 6, greaterValue));
+
+            target.FIE();
+
+            Assert.AreEqual(1u, target.Registers[6]);
+        }
+
+        [TestMethod]
+        public void SLTIU_IsGreaterThan()
+        {
+            const uint greaterValue = 7800;
+            const uint lesserValue = 2400;
+            target.Registers[4] = greaterValue;
+            PushInstruction(new FormatI(0b00_1011, 4, 6, lesserValue));
+
+            target.FIE();
+
+            Assert.AreEqual(0u, target.Registers[6]);
+        }
+
+        [TestMethod]
+        public void SLTIU_AreEqual()
+        {
+            const uint value = 7800;
+            target.Registers[4] = value;
+            PushInstruction(new FormatI(0b00_1011, 4, 6, value));
+
+            target.FIE();
+
+            Assert.AreEqual(0u, target.Registers[6]);
+        }
+        
+        [TestMethod]
+        public void SRA()
+        {
+            const uint value = 0b0000_1101_0011;
+            const int shamt = 3;
+            const uint expected = 0b0000_0001_1010;
+            target.Registers[4] = value;
+            PushInstruction(new FormatR(0, 4, 6, shamt, 0b00_0011));
+
+            target.FIE();
+
+            Assert.AreEqual(expected, target.Registers[6]);
+        }
+
+        [TestMethod]
+        public void SRA_Negative()
+        {
+            // the sign bit is shifted in
+            const uint value = 0b1000_0000_0000_0000_0000_0000_1101_0011;
+            const int shamt = 3;
+            const uint expected = 0b1111_0000_0000_0000_0000_0000_0001_1010;
+            target.Registers[4] = value;
+            PushInstruction(new FormatR(0, 4, 6, shamt, 0b00_0011));
+
+            target.FIE();
+
+            Assert.AreEqual(expected, target.Registers[6]);
+        }
+
+        [TestMethod]
+        public void SRL()
+        {
+            const uint value = 0b0000_1101_0011;
+            const int shamt = 3;
+            const uint expected = 0b0000_0001_1010;
+            target.Registers[4] = value;
+            PushInstruction(new FormatR(0, 4, 6, shamt, 0b00_0010));
+
+            target.FIE();
+
+            Assert.AreEqual(expected, target.Registers[6]);
+        }
+
+        [TestMethod]
+        public void SRL_Negative()
+        {
+            // zeroes are shifted in
+            const uint value = 0b1000_0000_0000_0000_0000_0000_1101_0011;
+            const int shamt = 3;
+            const uint expected = 0b0001_0000_0000_0000_0000_0000_0001_1010;
+            target.Registers[4] = value;
+            PushInstruction(new FormatR(0, 4, 6, shamt, 0b00_0010));
+
+            target.FIE();
+
+            Assert.AreEqual(expected, target.Registers[6]);
+        }
+
+        [TestMethod]
+        public void SRLV()
+        {
+            const uint value = 0b0000_1101_0011;
+            const int shamt = 3;
+            const uint expected = 0b0000_0001_1010;
+            target.Registers[4] = value;
+            target.Registers[5] = shamt;
+            PushInstruction(new FormatR(5, 4, 6, 0, 0b00_0110));
+
+            target.FIE();
+
+            Assert.AreEqual(expected, target.Registers[6]);
+        }
+
+        [TestMethod]
+        public void SRLV_Negative()
+        {
+            // zeroes are shifted in
+            const uint value = 0b1000_0000_0000_0000_0000_0000_1101_0011;
+            const int shamt = 3;
+            const uint expected = 0b0001_0000_0000_0000_0000_0000_0001_1010;
+            target.Registers[4] = value;
+            target.Registers[5] = shamt;
+            PushInstruction(new FormatR(5, 4, 6, 0, 0b00_0110));
+
+            target.FIE();
+
+            Assert.AreEqual(expected, target.Registers[6]);
+        }
+
+        [TestMethod]
+        public void SUB()
+        {
+            target.Registers[4] = 234;
+            target.Registers[5] = 123;
+            PushInstruction(new FormatR(4, 5, 6, 0, 0b10_0010));
+
+            target.FIE();
+
+            Assert.AreEqual(234u - 123u, target.Registers[6]);
+        }
+
+        [TestMethod]
+        [ExpectedException(typeof(OverflowException))]
+        public void SUB_Overflow()
+        {
+            target.Registers[4] = unchecked((uint)int.MinValue);
+            target.Registers[5] = 234;
+            PushInstruction(new FormatR(4, 5, 6, 0, 0b10_0010));
+
+            target.FIE();
+        }
+
+        [TestMethod]
+        public void SUBU()
+        {
+            target.Registers[4] = 234;
+            target.Registers[5] = 123;
+            PushInstruction(new FormatR(4, 5, 6, 0, 0b10_0011));
+
+            target.FIE();
+
+            Assert.AreEqual(234u - 123u, target.Registers[6]);
+        }
+
+        [TestMethod]
+        public void SUBU_Overflow()
+        {
+            uint minuend = unchecked((uint)int.MinValue);
+            target.Registers[4] = minuend;
+            target.Registers[5] = 234;
+            PushInstruction(new FormatR(4, 5, 6, 0, 0b10_0011));
+
+            target.FIE();
+
+            Assert.AreEqual(minuend - 234u, target.Registers[6]);
+        }
+               
+        [TestMethod]
+        public void SW()
+        {
+            const uint address = 0xF00BA;
+            const uint value = 0xABCDEF01;
+            target.Registers[4] = address;
+            target.Registers[6] = value;
+            PushInstruction(new FormatI(0b10_1011, 4, 6, 0));
+
+            target.FIE();
+
+            Assert.AreEqual(value, target.Memory.LoadWord(address));
+        }
+
+        [TestMethod]
+        public void XOR()
+        {
+            target.Registers[4] = 0b1101_0011;
+            target.Registers[5] = 0b1001_1010;
+            const uint expected = 0b0100_1001;
+            PushInstruction(new FormatR(4, 5, 6, 0, 0b10_0110));
+
+            target.FIE();
+
+            Assert.AreEqual(expected, target.Registers[6]);
+        }
+
+        [TestMethod]
+        public void XORI()
+        {
+            target.Registers[4] = 0b1101_0011;
+            const uint inputVal = 0b1001_1010;
+            const uint expected = 0b0100_1001;
+            PushInstruction(new FormatI(0b00_1110, 4, 6, inputVal));
+
+            target.FIE();
+
+            Assert.AreEqual(expected, target.Registers[6]);
         }
     }
 }
