@@ -154,8 +154,12 @@ namespace MipsEmulator.Services
                 Registers[ins.Rd] = Registers[ins.Rt] >> (int)Registers[ins.Rs];
                 break;
             case 0b100010:  // sub
-                Registers[ins.Rd] = checked(Registers[ins.Rs] - Registers[ins.Rt]);
+            {
+                int minuend = (int)Registers[ins.Rs];
+                int subtrahend = (int)Registers[ins.Rt];
+                Registers[ins.Rd] = (uint)checked(minuend - subtrahend);
                 break;
+            }
             case 0b100011:  // subu
                 Registers[ins.Rd] = Registers[ins.Rs] - Registers[ins.Rt];
                 break;
@@ -284,8 +288,8 @@ namespace MipsEmulator.Services
                 break;
             case 0b101011:  // sw
             {
-                uint address = ins.Value + (uint)ins.Rs;
-                Memory.StoreWord(address, (uint)ins.Rt);
+                uint address = ins.Value + Registers[ins.Rs];
+                Memory.StoreWord(address, Registers[ins.Rt]);
                 break;
             }
             case 0b001110:  // xori
