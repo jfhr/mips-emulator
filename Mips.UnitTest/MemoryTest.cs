@@ -1,13 +1,13 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-using MipsEmulator.Services;
+using Mips.Services;
 
-namespace MipsEmulator.UnitTest
+namespace Mips.UnitTest
 {
     [TestClass]
     public class MemoryTest
     {
         [TestMethod]
-        public void Read0()
+        public void Read_0()
         {
             var target = new Memory();
 
@@ -17,7 +17,7 @@ namespace MipsEmulator.UnitTest
         }
 
         [TestMethod]
-        public void Write0()
+        public void Write_0()
         {
             var target = new Memory();
 
@@ -27,7 +27,7 @@ namespace MipsEmulator.UnitTest
         }
 
         [TestMethod]
-        public void Read0xDEADBEEF()
+        public void Read_0xDEADBEEF()
         {
             var target = new Memory();
 
@@ -37,7 +37,7 @@ namespace MipsEmulator.UnitTest
         }
 
         [TestMethod]
-        public void Write0xDEADBEEF()
+        public void Write_0xDEADBEEF()
         {
             var target = new Memory();
 
@@ -47,7 +47,7 @@ namespace MipsEmulator.UnitTest
         }
 
         [TestMethod]
-        public void LoadWord0()
+        public void LoadWord_0()
         {
             var target = new Memory();
 
@@ -57,7 +57,7 @@ namespace MipsEmulator.UnitTest
         }
 
         [TestMethod]
-        public void StoreWord0()
+        public void StoreWord_0()
         {
             var target = new Memory();
 
@@ -72,7 +72,7 @@ namespace MipsEmulator.UnitTest
         }
 
         [TestMethod]
-        public void StoreWord25002()
+        public void StoreWord_25002()
         {
             var target = new Memory();
 

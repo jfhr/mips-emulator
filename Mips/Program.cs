@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Blazor.Hosting;
 
-namespace MipsEmulator
+namespace Mips
 {
     public class Program
     {

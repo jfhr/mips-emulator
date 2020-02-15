@@ -15,7 +15,7 @@
         "ASPNETCORE_ENVIRONMENT": "Development"
       }
     },
-    "MipsEmulator": {
+    "Mips": {
       "commandName": "Project",
       "launchBrowser": true,
       "environmentVariables": {

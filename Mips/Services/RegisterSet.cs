@@ -1,4 +1,4 @@
-﻿namespace MipsEmulator.Services
+﻿namespace Mips.Services
 {
     public class RegisterSet
     {

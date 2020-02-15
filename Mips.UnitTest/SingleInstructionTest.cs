@@ -1,8 +1,8 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using MipsEmulator.Services;
+using Mips.Services;
 using System;
 
-namespace MipsEmulator.UnitTest
+namespace Mips.UnitTest
 {
     [TestClass]
     public class SingleInstructionTest

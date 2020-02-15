@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace MipsEmulator.Services
+namespace Mips.Services
 {
     /// <summary>
     /// Represents the memory.
