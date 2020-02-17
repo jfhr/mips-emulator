@@ -4,6 +4,12 @@ namespace Mips.Services
 {
     public class Cpu
     {
+        /// <summary>
+        /// If this value is executed as an instruction, the Cpu will immediately halt execution,
+        /// and throw an exception.
+        /// </summary>
+        public const uint BreakValue = 0xFFFF_FFFF;
+
         private readonly OperationDecoder decoder;
 
         /// <summary>
@@ -37,12 +43,16 @@ namespace Mips.Services
         {
             // Fetch
             uint instruction = Memory.LoadWord(Pc);
-            IInstructionFormat format = decoder.DecodeInstruction(instruction);
+            if (instruction == BreakValue)
+            {
+                throw new CpuBreakException();
+            }
 
             // Increment
             Pc += 4;
 
             // Execute
+            IInstructionFormat format = decoder.DecodeInstruction(instruction);
             if (format is FormatR insR)
             {
                 Execute(insR);
@@ -90,7 +100,7 @@ namespace Mips.Services
             {
                 int numerator = (int)Registers[ins.Rs];
                 int denominator = (int)Registers[ins.Rt];
-                int result =  numerator / denominator;
+                int result = numerator / denominator;
                 int remainder = numerator % denominator;
                 Registers.Lo = (uint)result;
                 Registers.Hi = (uint)remainder;
