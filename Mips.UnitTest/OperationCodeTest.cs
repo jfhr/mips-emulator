@@ -13,7 +13,9 @@ namespace Mips.UnitTest
             new object[] { 0b0000_0000_0000_0000_0000_0000_0011_1010u, new FormatR(0, 0, 0, 0, 0b11_1010u) },
             new object[] { 0b0000_0000_0000_0000_0000_0000_0111_1010u, new FormatR(0, 0, 0, 1, 0b11_1010u) },
             new object[] { 0b0000_0010_0001_0000_1000_0100_0010_0000u, new FormatR(0b10000, 0b10000, 0b10000, 0b10000, 0b10_0000u) },
-            new object[] { 0b0010_0010_1010_1010_1000_0000_0000_0000u, new FormatI(0b0010_00, 0b10101, 0b01010, 0x8000)}
+            new object[] { 0b0010_0010_1010_1010_1000_0000_0000_0000u, new FormatI(0b0010_00, 0b10101, 0b01010, 0x8000)},
+            new object[] { 0x08DEADBEu, new FormatJ(0xDEADBE, false)},
+            new object[] { 0x0CDEADBEu, new FormatJ(0xDEADBE, true)},
         };
 
         [TestMethod, DynamicData(nameof(TestData))]

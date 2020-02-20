@@ -19,7 +19,7 @@ namespace Mips.UnitTest
             // Since we are only testing single instructions, we know the PC will be at 4
             // after the first instruction, unless it branched.
             Assert.AreNotEqual(4u, target.Pc, "CPU did not branch when it should have branched.");
-            uint expectedPc = (offset << 2) + 4u;
+            uint expectedPc = (uint)((int)offset << 2) + 4;
             Assert.AreEqual(expectedPc, target.Pc, "CPU branched to a different offset than it should have.");
         }
 
@@ -40,6 +40,27 @@ namespace Mips.UnitTest
         private void AssertDidBranchAndLink(uint offset)
         {
             AssertDidBranch(offset);
+            Assert.AreEqual(4u, target.Registers.Ra, "CPU did not link back when it should have.");
+        }
+
+        /// <summary>
+        /// Asserts that the CPU jumped after the first instruction 
+        /// and throws an <see cref="AssertFailedException"/> if it didn't.
+        /// </summary>
+        private void AssertDidJump(uint offset)
+        {
+            uint expectedPc = offset << 2;
+            Assert.AreEqual(expectedPc, target.Pc, "CPU jumped to a different location than it should have.");
+        }
+
+        /// <summary>
+        /// Asserts that the CPU jumped after the first instruction 
+        /// and linked back and throws an <see cref="AssertFailedException"/> 
+        /// if it didn't.
+        /// </summary>
+        private void AssertDidJumpAndLink(uint offset)
+        {
+            AssertDidJump(offset);
             Assert.AreEqual(4u, target.Registers.Ra, "CPU did not link back when it should have.");
         }
 
@@ -514,27 +535,46 @@ namespace Mips.UnitTest
         [TestMethod]
         public void J()
         {
-            // jump to 100000 (2 trailing zeroes are implicit)
-            target.Memory.StoreWord(0, 0b0000_1000_0000_0000_0000_0000_0000_1000);
+            uint offset = 0xBEE5;
+            PushInstruction(new FormatJ(offset, false));
 
             target.FIE();
 
-            Assert.AreEqual((uint)0b1000_00, target.Pc);
+            AssertDidJump(offset);
         }
+
+        [TestMethod]
+        public void J_0()
+        {
+            uint offset = 0;
+            PushInstruction(new FormatJ(offset, false));
+
+            target.FIE();
+
+            AssertDidJump(offset);
+        }
+
 
         [TestMethod]
         public void JAL()
         {
-            // jump to 100000 (2 trailing zeroes are implicit)
-            // opcode 000011 means jump and link
-            // bc the sequence is (increment, then execute)
-            // the CPU should link back to the instruction following the jal, here [4]
-            target.Memory.StoreWord(0, 0b0000_1100_0000_0000_0000_0000_0000_1000);
+            uint offset = 0xBEE5;
+            PushInstruction(new FormatJ(offset, true));
 
             target.FIE();
 
-            Assert.AreEqual((uint)0b1000_00, target.Pc);
-            Assert.AreEqual((uint)4, target.Registers.Ra);
+            AssertDidJumpAndLink(offset);
+        }
+
+        [TestMethod]
+        public void JAL_0()
+        {
+            uint offset = 0;
+            PushInstruction(new FormatJ(offset, true));
+
+            target.FIE();
+
+            AssertDidJumpAndLink(offset);
         }
 
         [TestMethod]
