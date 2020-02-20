@@ -311,7 +311,7 @@ namespace Mips.Services
         /// <summary>
         /// Branch to an instruction at the specified offset
         /// from the current instruction. The offset is 
-        /// interpreted as signed.
+        /// interpreted as a signed 16-bit integer.
         /// </summary>
         /// <remarks>
         /// For convenience, the offset can be given as a uint.
@@ -320,6 +320,12 @@ namespace Mips.Services
         private void BranchTo(uint offset)
         {
             offset <<= 2;
+            // offset has 16 bits, 18 after shifting
+            // we may have to carry the sign bit 
+            if ((offset & 0b0000_0000_0000_0010_0000_0000_0000_0000) != 0)
+            {
+                offset |= 0b1111_1111_1111_1100_0000_0000_0000_0000;
+            }
             int signed_offset = (int)offset;
             Pc = (uint)(Pc + signed_offset);
         }
