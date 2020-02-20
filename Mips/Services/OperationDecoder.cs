@@ -67,7 +67,7 @@ namespace Mips.Services
 
         public uint EncodeInstruction(FormatJ ins)
         {
-            uint word = 0;
+            uint word = 0b0000_1000_0000_0000_0000_0000_0000_0000;
             word |= ins.Address;
             if (ins.Link)
             {
