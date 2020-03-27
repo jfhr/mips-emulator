@@ -18,7 +18,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Mips\Mips.csproj" />
+    <ProjectReference Include="..\src\Mips.Emulator.csproj" />
   </ItemGroup>
 
 </Project>

@@ -1,7 +1,6 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Mips.Services;
 
-namespace Mips.UnitTest
+namespace Mips.Emulator.UnitTest
 {
     [TestClass]
     public class RegisterSetTest

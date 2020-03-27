@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace Mips.Services
+namespace Mips.Emulator
 {
     /// <summary>
     /// Decodes a 32-Bit word into the appropriate <see cref="IInstructionFormat"/>.

@@ -1,11 +1,10 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Mips.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace Mips.ComponentTest
+namespace Mips.Emulator.ComponentTest
 {
     [TestClass]
     public class MultipleInstructionTests

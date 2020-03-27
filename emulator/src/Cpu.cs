@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Mips.Services
+namespace Mips.Emulator
 {
     public class Cpu
     {
