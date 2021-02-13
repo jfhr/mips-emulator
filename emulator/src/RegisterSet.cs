@@ -9,10 +9,11 @@
             get => reg[index];
             set
             {
-                // no write to $zero
-                if (index == 0)
-                    return;
-                reg[index] = value;
+                // no write to zero
+                if (index != 0)
+                {
+                    reg[index] = value;
+                }
             }
         }
 

@@ -29,7 +29,7 @@ namespace Mips.Emulator.ComponentTest
             {
                 target.Memory.StoreWord(i * 4, program[i]);
             }
-            target.Memory.StoreWord(i * 4, Cpu.BreakValue);
+            target.Memory.StoreWord(i * 4, Cpu.TerminateInstruction);
         }
 
         /// <summary>
@@ -53,25 +53,6 @@ namespace Mips.Emulator.ComponentTest
             if (a1 != null) target.Registers.A1 = a1.Value;
             if (a2 != null) target.Registers.A2 = a2.Value;
             if (a3 != null) target.Registers.A3 = a3.Value;
-        }
-
-        /// <summary>
-        /// Execute cpu cycles until a break instruction is run.
-        /// If you use this, put a Timeout on your test method.
-        /// </summary>
-        private void RunUntilBreak()
-        {
-            try
-            {
-                while (true)
-                {
-                    target.FIE();
-                }
-            }
-            catch (CpuBreakException)
-            {
-                return;
-            }
         }
 
         private static readonly uint[] primes = { 2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97 };
@@ -110,7 +91,7 @@ namespace Mips.Emulator.ComponentTest
             RandomizeRegisters();
             LoadArguments(value);
 
-            RunUntilBreak();
+            target.CycleUntilTerminate();
 
             uint expected = isValuePrime ? 1u : 0u;
             Assert.AreEqual(expected, target.Registers.V0);
@@ -150,7 +131,7 @@ namespace Mips.Emulator.ComponentTest
                 target.Memory[i + offset] = dataAscii[i];
             }
 
-            RunUntilBreak();
+            target.CycleUntilTerminate();
 
             Assert.AreEqual((uint)dataAscii.Length, target.Registers.V0);
         }

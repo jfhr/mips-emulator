@@ -5,12 +5,11 @@ namespace Mips.Emulator
     public class Cpu
     {
         /// <summary>
-        /// If this value is executed as an instruction, the Cpu will immediately halt execution,
-        /// and throw an exception.
+        /// Equivalent to the trap(10) instruction.
+        /// If this value is executed as an instruction, the Cpu will immediately halt execution.
         /// </summary>
-        public const uint BreakValue = 0xFFFF_FFFF;
+        public const uint TerminateInstruction = 0b011010_00000_00000_0000000000000010u;
 
-        private readonly OperationDecoder decoder;
 
         /// <summary>
         /// The complete Register set, including hi and lo.
@@ -33,278 +32,309 @@ namespace Mips.Emulator
         {
             Registers = new RegisterSet();
             Memory = new Memory();
-            decoder = new OperationDecoder();
         }
 
         /// <summary>
-        /// Fetch, increment, execute.
+        /// Runs Cpu cycles until the program terminates.
         /// </summary>
-        public void FIE()
+        public void CycleUntilTerminate()
+        {
+            try
+            {
+                while (true) CycleOnce();
+            }
+            catch (ProgramTerminatedException) { }
+        }
+
+        /// <summary>
+        /// Runs one Cpu cycle, returns a value indicating if execution should continue.
+        /// </summary>
+        public void CycleOnce()
         {
             // Fetch
             uint instruction = Memory.LoadWord(Pc);
-            if (instruction == BreakValue)
+
+            if (instruction == TerminateInstruction)
             {
-                throw new CpuBreakException();
+                throw new ProgramTerminatedException();
             }
 
             // Increment
             Pc += 4;
 
             // Execute
-            IInstructionFormat format = decoder.DecodeInstruction(instruction);
-            if (format is FormatR insR)
+            if ((instruction & 0b1111_1100_0000_0000_0000_0000_0000_0000) == 0)
             {
-                Execute(insR);
+                // Use format R (register operation)
+                int rs = (int)(instruction & 0b0000_0011_1110_0000_0000_0000_0000_0000) >> 21;
+                int rt = (int)(instruction & 0b0000_0000_0001_1111_0000_0000_0000_0000) >> 16;
+                int rd = (int)(instruction & 0b0000_0000_0000_0000_1111_1000_0000_0000) >> 11;
+                int shamt = (int)(instruction & 0b0000_0000_0000_0000_0000_0111_1100_0000) >> 6;
+                uint function = instruction & 0b0000_0000_0000_0000_0000_0000_0011_1111;
+                ExecuteFormatR(rs, rt, rd, shamt, function);
             }
-            else if (format is FormatJ insJ)
+
+            else if ((instruction & 0b1111_1000_0000_0000_0000_0000_0000_0000) == 0b0000_1000_0000_0000_0000_0000_0000_0000)
             {
-                Execute(insJ);
+                // Use format J (jump operation)
+                uint address = (instruction & 0b0000_0011_1111_1111_1111_1111_1111_1111);
+                bool link = (instruction & 0b0000_0100_0000_0000_0000_0000_0000_0000) != 0;
+                ExecuteFormatJ(address, link);
             }
-            else if (format is FormatI insI)
+
+            else
             {
-                Execute(insI);
+                // Use format I (immediate operation)
+                uint opcode = (instruction & 0b1111_1100_0000_0000_0000_0000_0000_0000) >> 26;
+                int rs = (int)(instruction & 0b0000_0011_1110_0000_0000_0000_0000_0000) >> 21;
+                int rt = (int)(instruction & 0b0000_0000_0001_1111_0000_0000_0000_0000) >> 16;
+                uint value = instruction & 0b0000_0000_0000_0000_1111_1111_1111_1111;
+                ExecuteFormatI(opcode, rs, rt, value);
+            }
+        }
+
+        /// <summary>
+        /// Execute a format R (register) instruction.
+        /// </summary>
+        void ExecuteFormatR(int rs, int rt, int rd, int shamt, uint function)
+        {
+            switch (function)
+            {
+                case 0b100000:  // add
+                    Registers[rd] = (uint)checked((int)Registers[rs] + (int)Registers[rt]);
+                    break;
+                case 0b100001:  // addu
+                    Registers[rd] = Registers[rs] + Registers[rt];
+                    break;
+                case 0b100100:  // and                
+                    Registers[rd] = Registers[rs] & Registers[rt];
+                    break;
+                case 0b011010:  // div
+                    {
+                        int numerator = (int)Registers[rs];
+                        int denominator = (int)Registers[rt];
+                        int result = numerator / denominator;
+                        int remainder = numerator % denominator;
+                        Registers.Lo = (uint)result;
+                        Registers.Hi = (uint)remainder;
+                        break;
+                    }
+                case 0b011011:  // divu
+                    {
+                        Registers.Lo = Registers[rs] / Registers[rt];
+                        Registers.Hi = Registers[rs] % Registers[rt];
+                        break;
+                    }
+                case 0b001000:  // jr
+                    Pc = Registers[rs];
+                    break;
+                case 0b010000:  // mfhi
+                    Registers[rd] = Registers.Hi;
+                    break;
+                case 0b010010:  // mflo
+                    Registers[rd] = Registers.Lo;
+                    break;
+                case 0b011000:  // mult
+                    {
+                        // First convert to Int32, then to Int64
+                        // If we convert directly UInt32 -> Int64, we get the unsigned value.
+                        int signedS = (int)Registers[rs];
+                        int signedT = (int)Registers[rt];
+                        long result = (long)signedS * signedT;
+                        Registers.Lo = (uint)result;
+                        Registers.Hi = (uint)(result >> 32);
+                        break;
+                    }
+                case 0b011001:  // multu
+                    {
+                        ulong result = Registers[rs] * (ulong)Registers[rt];
+                        Registers.Lo = (uint)result;
+                        Registers.Hi = (uint)(result >> 32);
+                        break;
+                    }
+                case 0b100101:  // or
+                    Registers[rd] = Registers[rs] | Registers[rt];
+                    break;
+                case 0b000000:  // sll
+                    Registers[rd] = Registers[rt] << shamt;
+                    break;
+                case 0b000100:  // sllv
+                    Registers[rd] = Registers[rt] << (int)Registers[rs];
+                    break;
+                case 0b101010:  //slt
+                    Registers[rd] = ((int)Registers[rs] < (int)Registers[rt]) ? 1U : 0U;
+                    break;
+                case 0b101011:  //sltu
+                    Registers[rd] = (Registers[rs] < Registers[rt]) ? 1U : 0U;
+                    break;
+                case 0b000011:  // sra
+                    Registers[rd] = (uint)((int)Registers[rt] >> shamt);
+                    break;
+                case 0b000010:  // srl
+                    Registers[rd] = Registers[rt] >> shamt;
+                    break;
+                case 0b000110:  // srlv
+                    Registers[rd] = Registers[rt] >> (int)Registers[rs];
+                    break;
+                case 0b100010:  // sub
+                    {
+                        int minuend = (int)Registers[rs];
+                        int subtrahend = (int)Registers[rt];
+                        Registers[rd] = (uint)checked(minuend - subtrahend);
+                        break;
+                    }
+                case 0b100011:  // subu
+                    Registers[rd] = Registers[rs] - Registers[rt];
+                    break;
+                case 0b001100:  // TODO syscall
+                    throw new NotImplementedException();
+                case 0b100110:  // xor
+                    Registers[rd] = Registers[rs] ^ Registers[rt];
+                    break;
+                default:
+                    throw new NotImplementedException();
             }
         }
 
         /// <summary>
         /// Execute a format J instruction (j or jal).
         /// </summary>
-        void Execute(FormatJ ins)
+        void ExecuteFormatJ(uint address, bool link)
         {
             uint pc_upper_4_bit = Pc & 0xF0000000;
-            if (ins.Link)
+            if (link)
             {
                 Link();
             }
-            Pc = pc_upper_4_bit | (ins.Address << 2);
-        }
-
-        /// <summary>
-        /// Execute a format R (register) instruction.
-        /// </summary>
-        void Execute(FormatR ins)
-        {
-            switch (ins.Function)
-            {
-            case 0b100000:  // add
-                Registers[ins.Rd] = (uint)checked((int)Registers[ins.Rs] + (int)Registers[ins.Rt]);
-                break;
-            case 0b100001:  // addu
-                Registers[ins.Rd] = Registers[ins.Rs] + Registers[ins.Rt];
-                break;
-            case 0b100100:  // and                
-                Registers[ins.Rd] = Registers[ins.Rs] & Registers[ins.Rt];
-                break;
-            case 0b011010:  // div
-            {
-                int numerator = (int)Registers[ins.Rs];
-                int denominator = (int)Registers[ins.Rt];
-                int result = numerator / denominator;
-                int remainder = numerator % denominator;
-                Registers.Lo = (uint)result;
-                Registers.Hi = (uint)remainder;
-                break;
-            }
-            case 0b011011:  // divu
-            {
-                Registers.Lo = Registers[ins.Rs] / Registers[ins.Rt];
-                Registers.Hi = Registers[ins.Rs] % Registers[ins.Rt];
-                break;
-            }
-            case 0b001000:  // jr
-                Pc = Registers[ins.Rs];
-                break;
-            case 0b010000:  // mfhi
-                Registers[ins.Rd] = Registers.Hi;
-                break;
-            case 0b010010:  // mflo
-                Registers[ins.Rd] = Registers.Lo;
-                break;
-            case 0b011000:  // mult
-            {
-                // First convert to Int32, then to Int64
-                // If we convert directly UInt32 -> Int64, we get the unsigned value.
-                int signedS = (int)Registers[ins.Rs];
-                int signedT = (int)Registers[ins.Rt];
-                long result = (long)signedS * signedT;
-                Registers.Lo = (uint)result;
-                Registers.Hi = (uint)(result >> 32);
-                break;
-            }
-            case 0b011001:  // multu
-            {
-                ulong result = Registers[ins.Rs] * (ulong)Registers[ins.Rt];
-                Registers.Lo = (uint)result;
-                Registers.Hi = (uint)(result >> 32);
-                break;
-            }
-            case 0b100101:  // or
-                Registers[ins.Rd] = Registers[ins.Rs] | Registers[ins.Rt];
-                break;
-            case 0b000000:  // sll
-                Registers[ins.Rd] = Registers[ins.Rt] << ins.Shamt;
-                break;
-            case 0b000100:  // sllv
-                Registers[ins.Rd] = Registers[ins.Rt] << (int)Registers[ins.Rs];
-                break;
-            case 0b101010:  //slt
-                Registers[ins.Rd] = ((int)Registers[ins.Rs] < (int)Registers[ins.Rt]) ? 1U : 0U;
-                break;
-            case 0b101011:  //sltu
-                Registers[ins.Rd] = (Registers[ins.Rs] < Registers[ins.Rt]) ? 1U : 0U;
-                break;
-            case 0b000011:  // sra
-                Registers[ins.Rd] = (uint)((int)Registers[ins.Rt] >> ins.Shamt);
-                break;
-            case 0b000010:  // srl
-                Registers[ins.Rd] = Registers[ins.Rt] >> ins.Shamt;
-                break;
-            case 0b000110:  // srlv
-                Registers[ins.Rd] = Registers[ins.Rt] >> (int)Registers[ins.Rs];
-                break;
-            case 0b100010:  // sub
-            {
-                int minuend = (int)Registers[ins.Rs];
-                int subtrahend = (int)Registers[ins.Rt];
-                Registers[ins.Rd] = (uint)checked(minuend - subtrahend);
-                break;
-            }
-            case 0b100011:  // subu
-                Registers[ins.Rd] = Registers[ins.Rs] - Registers[ins.Rt];
-                break;
-            case 0b001100:  // TODO syscall
-                throw new NotImplementedException();
-            case 0b100110:  // xor
-                Registers[ins.Rd] = Registers[ins.Rs] ^ Registers[ins.Rt];
-                break;
-            }
+            Pc = pc_upper_4_bit | (address << 2);
         }
 
         /// <summary>
         /// Execute a format I (immediate) instruction.
         /// </summary>
-        private void Execute(FormatI ins)
+        private void ExecuteFormatI(uint opcode, int rs, int rt, uint value)
         {
-            switch (ins.Opcode)
+            switch (opcode)
             {
-            case 0b001000:  // addi
-                Registers[ins.Rt] = (uint)checked((int)Registers[ins.Rs] + (int)ins.Value);
-                break;
-            case 0b001001:  // addiu
-                Registers[ins.Rt] = Registers[ins.Rs] + ins.Value;
-                break;
-            case 0b001100:  // andi
-                Registers[ins.Rt] = Registers[ins.Rs] & ins.Value;
-                break;
-            case 0b000100:  // beq
-                if (Registers[ins.Rt] == Registers[ins.Rs])
-                {
-                    BranchTo(ins.Value);
-                }
-                break;
-            case 0b000001:  // multiple branch instructions
-                switch (ins.Rt)
-                {
-                case 0b00001:  // bgez
-                    if ((int)Registers[ins.Rs] >= 0)
+                case 0b001000:  // addi
+                    Registers[rt] = (uint)checked((int)Registers[rs] + (int)value);
+                    break;
+                case 0b001001:  // addiu
+                    Registers[rt] = Registers[rs] + value;
+                    break;
+                case 0b001100:  // andi
+                    Registers[rt] = Registers[rs] & value;
+                    break;
+                case 0b000100:  // beq
+                    if (Registers[rt] == Registers[rs])
                     {
-                        BranchTo(ins.Value);
+                        BranchTo(value);
                     }
                     break;
-                case 0b10001:  // bgezal
-                    if ((int)Registers[ins.Rs] >= 0)
+                case 0b000001:  // multiple branch instructions
+                    switch (rt)
                     {
-                        Link();
-                        BranchTo(ins.Value);
+                        case 0b00001:  // bgez
+                            if ((int)Registers[rs] >= 0)
+                            {
+                                BranchTo(value);
+                            }
+                            break;
+                        case 0b10001:  // bgezal
+                            if ((int)Registers[rs] >= 0)
+                            {
+                                Link();
+                                BranchTo(value);
+                            }
+                            break;
+                        case 0b00000:  // bltz
+                            if ((int)Registers[rs] < 0)
+                            {
+                                BranchTo(value);
+                            }
+                            break;
+                        case 0b10000:   // bltzal
+                            if ((int)Registers[rs] < 0)
+                            {
+                                Link();
+                                BranchTo(value);
+                            }
+                            break;
                     }
                     break;
-                case 0b00000:  // bltz
-                    if ((int)Registers[ins.Rs] < 0)
+                case 0b000111:  // bgtz
+                    if ((int)Registers[rs] > 0)
                     {
-                        BranchTo(ins.Value);
+                        BranchTo(value);
                     }
                     break;
-                case 0b10000:   // bltzal
-                    if ((int)Registers[ins.Rs] < 0)
+                case 0b000110:  // blez
+                    if ((int)Registers[rs] <= 0)
                     {
-                        Link();
-                        BranchTo(ins.Value);
+                        BranchTo(value);
                     }
                     break;
-                }
-                break;
-            case 0b000111:  // bgtz
-                if ((int)Registers[ins.Rs] > 0)
-                {
-                    BranchTo(ins.Value);
-                }
-                break;
-            case 0b000110:  // blez
-                if ((int)Registers[ins.Rs] <= 0)
-                {
-                    BranchTo(ins.Value);
-                }
-                break;
-            case 0b000101:  // bne
-                if (Registers[ins.Rs] != Registers[ins.Rt])
-                {
-                    BranchTo(ins.Value);
-                }
-                break;
-            case 0b100000:  // lb
-            {
-                uint address = ins.Value + Registers[ins.Rs];
-                Registers[ins.Rt] = Memory[address];
-                break;
-            }
-            case 0b001111:  // lui
-                Registers[ins.Rt] = (ins.Value << 16);
-                break;
-            case 0b100011:  // lw
-            {
-                uint address = ins.Value + Registers[ins.Rs];
-                Registers[ins.Rt] = Memory.LoadWord(address);
-                break;
-            }
-            case 0b001101:  // ori
-                Registers[ins.Rt] = Registers[ins.Rs] | ins.Value;
-                break;
-            case 0b101000:  // sb
-            {
-                uint address = ins.Value + Registers[ins.Rs];
-                Memory[address] = (byte)Registers[ins.Rt];
-                break;
-            }
-            case 0b001010:  // slti
-                if ((int)Registers[ins.Rs] < (int)ins.Value)
-                {
-                    Registers[ins.Rt] = 1;
-                }
-                else
-                {
-                    Registers[ins.Rt] = 0;
-                }
-                break;
-            case 0b001011:  // sltiu
-                if (Registers[ins.Rs] < ins.Value)
-                {
-                    Registers[ins.Rt] = 1;
-                }
-                else
-                {
-                    Registers[ins.Rt] = 0;
-                }
-                break;
-            case 0b101011:  // sw
-            {
-                uint address = ins.Value + Registers[ins.Rs];
-                Memory.StoreWord(address, Registers[ins.Rt]);
-                break;
-            }
-            case 0b001110:  // xori
-                Registers[ins.Rt] = Registers[ins.Rs] ^ ins.Value;
-                break;
+                case 0b000101:  // bne
+                    if (Registers[rs] != Registers[rt])
+                    {
+                        BranchTo(value);
+                    }
+                    break;
+                case 0b100000:  // lb
+                    {
+                        uint address = value + Registers[rs];
+                        Registers[rt] = Memory[address];
+                        break;
+                    }
+                case 0b001111:  // lui
+                    Registers[rt] = (value << 16);
+                    break;
+                case 0b100011:  // lw
+                    {
+                        uint address = value + Registers[rs];
+                        Registers[rt] = Memory.LoadWord(address);
+                        break;
+                    }
+                case 0b001101:  // ori
+                    Registers[rt] = Registers[rs] | value;
+                    break;
+                case 0b101000:  // sb
+                    {
+                        uint address = value + Registers[rs];
+                        Memory[address] = (byte)Registers[rt];
+                        break;
+                    }
+                case 0b001010:  // slti
+                    if ((int)Registers[rs] < (int)value)
+                    {
+                        Registers[rt] = 1;
+                    }
+                    else
+                    {
+                        Registers[rt] = 0;
+                    }
+                    break;
+                case 0b001011:  // sltiu
+                    if (Registers[rs] < value)
+                    {
+                        Registers[rt] = 1;
+                    }
+                    else
+                    {
+                        Registers[rt] = 0;
+                    }
+                    break;
+                case 0b101011:  // sw
+                    {
+                        uint address = value + Registers[rs];
+                        Memory.StoreWord(address, Registers[rt]);
+                        break;
+                    }
+                case 0b001110:  // xori
+                    Registers[rt] = Registers[rs] ^ value;
+                    break;
+                default:
+                    throw new NotImplementedException();
             }
         }
 

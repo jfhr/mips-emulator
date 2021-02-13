@@ -7,7 +7,6 @@ namespace Mips.Emulator.UnitTest
     public class SingleInstructionTest
     {
         private Cpu target;
-        private OperationEncoder encoder;
 
         /// <summary>
         /// Asserts that the CPU branched after the first instruction 
@@ -64,12 +63,30 @@ namespace Mips.Emulator.UnitTest
         }
 
         /// <summary>
-        /// Encodes the instruction into a word and stores it in memory
+        /// Encodes the format R instruction into a word and stores it in memory
         /// as the first instruction.
         /// </summary>
-        private void PushInstruction(IInstructionFormat ins)
+        private void PushFormatR(int rs, int rt, int rd, int shamt, uint function)
         {
-            target.Memory.StoreWord(0, encoder.EncodeInstruction(ins));
+            target.Memory.StoreWord(0, OperationEncoder.EncodeFormatR(rs, rt, rd, shamt, function));
+        }
+
+        /// <summary>
+        /// Encodes the format J instruction into a word and stores it in memory
+        /// as the first instruction.
+        /// </summary>
+        private void PushFormatJ(uint address, bool link)
+        {
+            target.Memory.StoreWord(0, OperationEncoder.EncodeFormatJ(address, link));
+        }
+
+        /// <summary>
+        /// Encodes the format I instruction into a word and stores it in memory
+        /// as the first instruction.
+        /// </summary>
+        private void PushFormatI(uint opcode, int rs, int rt, uint value)
+        {
+            target.Memory.StoreWord(0, OperationEncoder.EncodeFormatI(opcode, rs, rt, value));
         }
 
 
@@ -77,7 +94,6 @@ namespace Mips.Emulator.UnitTest
         public void Initialize()
         {
             target = new Cpu();
-            encoder = new OperationEncoder();
         }
 
 
@@ -86,9 +102,9 @@ namespace Mips.Emulator.UnitTest
         {
             target.Registers[4] = 123;
             target.Registers[5] = 234;
-            PushInstruction(new FormatR(4, 5, 6, 0, 0b10_0000));
+            PushFormatR(4, 5, 6, 0, 0b10_0000);
 
-            target.FIE();
+            target.CycleOnce();
 
             Assert.AreEqual(123u + 234u, target.Registers[6]);
         }
@@ -99,18 +115,18 @@ namespace Mips.Emulator.UnitTest
         {
             target.Registers[4] = int.MaxValue;
             target.Registers[5] = 234;
-            PushInstruction(new FormatR(4, 5, 6, 0, 0b10_0000));
+            PushFormatR(4, 5, 6, 0, 0b10_0000);
 
-            target.FIE();
+            target.CycleOnce();
         }
 
         [TestMethod]
         public void ADDI()
         {
             target.Registers[4] = 123;
-            PushInstruction(new FormatI(0b00_1000, 4, 6, 234));
+            PushFormatI(0b00_1000, 4, 6, 234);
 
-            target.FIE();
+            target.CycleOnce();
 
             Assert.AreEqual(123u + 234u, target.Registers[6]);
         }
@@ -120,18 +136,18 @@ namespace Mips.Emulator.UnitTest
         public void ADDI_Overflow()
         {
             target.Registers[4] = int.MaxValue;
-            PushInstruction(new FormatI(0b00_1000, 4, 6, 234));
+            PushFormatI(0b00_1000, 4, 6, 234);
 
-            target.FIE();
+            target.CycleOnce();
         }
 
         [TestMethod]
         public void ADDIU()
         {
             target.Registers[4] = 123;
-            PushInstruction(new FormatI(0b00_1001, 4, 6, 234));
+            PushFormatI(0b00_1001, 4, 6, 234);
 
-            target.FIE();
+            target.CycleOnce();
 
             Assert.AreEqual(123u + 234u, target.Registers[6]);
         }
@@ -140,9 +156,9 @@ namespace Mips.Emulator.UnitTest
         public void ADDIU_Overflow()
         {
             target.Registers[4] = int.MaxValue;
-            PushInstruction(new FormatI(0b00_1001, 4, 6, 234));
+            PushFormatI(0b00_1001, 4, 6, 234);
 
-            target.FIE();
+            target.CycleOnce();
 
             Assert.AreEqual(int.MaxValue + 234u, target.Registers[6]);
         }
@@ -152,9 +168,9 @@ namespace Mips.Emulator.UnitTest
         {
             target.Registers[4] = 123;
             target.Registers[5] = 234;
-            PushInstruction(new FormatR(4, 5, 6, 0, 0b10_0001));
+            PushFormatR(4, 5, 6, 0, 0b10_0001);
 
-            target.FIE();
+            target.CycleOnce();
 
             Assert.AreEqual(123u + 234u, target.Registers[6]);
         }
@@ -164,9 +180,9 @@ namespace Mips.Emulator.UnitTest
         {
             target.Registers[4] = int.MaxValue;
             target.Registers[5] = 234;
-            PushInstruction(new FormatR(4, 5, 6, 0, 0b10_0001));
+            PushFormatR(4, 5, 6, 0, 0b10_0001);
 
-            target.FIE();
+            target.CycleOnce();
 
             Assert.AreEqual(int.MaxValue + 234u, target.Registers[6]);
         }
@@ -177,9 +193,9 @@ namespace Mips.Emulator.UnitTest
             target.Registers[4] = 0b1101_0011;
             target.Registers[5] = 0b1001_1010;
             const uint expected = 0b1001_0010;
-            PushInstruction(new FormatR(4, 5, 6, 0, 0b10_0100));
+            PushFormatR(4, 5, 6, 0, 0b10_0100);
 
-            target.FIE();
+            target.CycleOnce();
 
             Assert.AreEqual(expected, target.Registers[6]);
         }
@@ -190,9 +206,9 @@ namespace Mips.Emulator.UnitTest
             target.Registers[4] = 0b1101_0011;
             const uint inputVal = 0b1001_1010;
             const uint expected = 0b1001_0010;
-            PushInstruction(new FormatI(0b00_1100, 4, 6, inputVal));
+            PushFormatI(0b00_1100, 4, 6, inputVal);
 
-            target.FIE();
+            target.CycleOnce();
 
             Assert.AreEqual(expected, target.Registers[6]);
         }
@@ -203,9 +219,9 @@ namespace Mips.Emulator.UnitTest
             target.Registers[4] = 123;
             target.Registers[5] = 123;
             const uint offset = 1024;
-            PushInstruction(new FormatI(0b00_0100, 4, 5, offset));
+            PushFormatI(0b00_0100, 4, 5, offset);
 
-            target.FIE();
+            target.CycleOnce();
 
             AssertDidBranch(offset);
         }
@@ -216,9 +232,9 @@ namespace Mips.Emulator.UnitTest
             target.Registers[4] = 123;
             target.Registers[5] = 900;
             const uint offset = 1024;
-            PushInstruction(new FormatI(0b00_0100, 4, 5, offset));
+            PushFormatI(0b00_0100, 4, 5, offset);
 
-            target.FIE();
+            target.CycleOnce();
 
             AssertDidNotBranch();
         }
@@ -228,9 +244,9 @@ namespace Mips.Emulator.UnitTest
         {
             target.Registers[4] = 1;
             const uint offset = 1024;
-            PushInstruction(new FormatI(0b00_0001, 4, 0b0_0001, offset));
+            PushFormatI(0b00_0001, 4, 0b0_0001, offset);
 
-            target.FIE();
+            target.CycleOnce();
 
             AssertDidBranch(offset);
         }
@@ -240,9 +256,9 @@ namespace Mips.Emulator.UnitTest
         {
             target.Registers[4] = 0;
             const uint offset = 1024;
-            PushInstruction(new FormatI(0b00_0001, 4, 0b0_0001, offset));
+            PushFormatI(0b00_0001, 4, 0b0_0001, offset);
 
-            target.FIE();
+            target.CycleOnce();
 
             AssertDidBranch(offset);
         }
@@ -252,9 +268,9 @@ namespace Mips.Emulator.UnitTest
         {
             target.Registers[4] = 0xFFFFFFFF;  // -1
             const uint offset = 1024;
-            PushInstruction(new FormatI(0b00_0001, 4, 0b0_0001, offset));
+            PushFormatI(0b00_0001, 4, 0b0_0001, offset);
 
-            target.FIE();
+            target.CycleOnce();
 
             AssertDidNotBranch();
         }
@@ -264,9 +280,9 @@ namespace Mips.Emulator.UnitTest
         {
             target.Registers[4] = 1;
             const uint offset = 1024;
-            PushInstruction(new FormatI(0b00_0001, 4, 0b1_0001, offset));
+            PushFormatI(0b00_0001, 4, 0b1_0001, offset);
 
-            target.FIE();
+            target.CycleOnce();
 
             AssertDidBranchAndLink(offset);
         }
@@ -276,9 +292,9 @@ namespace Mips.Emulator.UnitTest
         {
             target.Registers[4] = 0;
             const uint offset = 1024;
-            PushInstruction(new FormatI(0b00_0001, 4, 0b1_0001, offset));
+            PushFormatI(0b00_0001, 4, 0b1_0001, offset);
 
-            target.FIE();
+            target.CycleOnce();
 
             AssertDidBranchAndLink(offset);
         }
@@ -288,9 +304,9 @@ namespace Mips.Emulator.UnitTest
         {
             target.Registers[4] = 0xFFFFFFFF;  // -1
             const uint offset = 1024;
-            PushInstruction(new FormatI(0b00_0001, 4, 0b1_0001, offset));
+            PushFormatI(0b00_0001, 4, 0b1_0001, offset);
 
-            target.FIE();
+            target.CycleOnce();
 
             AssertDidNotBranch();
         }
@@ -300,9 +316,9 @@ namespace Mips.Emulator.UnitTest
         {
             target.Registers[4] = 1;
             const uint offset = 1024;
-            PushInstruction(new FormatI(0b00_0111, 4, 0b0_0000, offset));
+            PushFormatI(0b00_0111, 4, 0b0_0000, offset);
 
-            target.FIE();
+            target.CycleOnce();
 
             AssertDidBranch(offset);
         }
@@ -312,9 +328,9 @@ namespace Mips.Emulator.UnitTest
         {
             target.Registers[4] = 0;
             const uint offset = 1024;
-            PushInstruction(new FormatI(0b00_0111, 4, 0b0_0000, offset));
+            PushFormatI(0b00_0111, 4, 0b0_0000, offset);
 
-            target.FIE();
+            target.CycleOnce();
 
             AssertDidNotBranch();
         }
@@ -324,9 +340,9 @@ namespace Mips.Emulator.UnitTest
         {
             target.Registers[4] = 0xFFFFFFFF;  // -1
             const uint offset = 1024;
-            PushInstruction(new FormatI(0b00_0111, 4, 0b0_0000, offset));
+            PushFormatI(0b00_0111, 4, 0b0_0000, offset);
 
-            target.FIE();
+            target.CycleOnce();
 
             AssertDidNotBranch();
         }
@@ -336,9 +352,9 @@ namespace Mips.Emulator.UnitTest
         {
             target.Registers[4] = 1;
             const uint offset = 1024;
-            PushInstruction(new FormatI(0b00_0110, 4, 0b0_0001, offset));
+            PushFormatI(0b00_0110, 4, 0b0_0001, offset);
 
-            target.FIE();
+            target.CycleOnce();
 
             AssertDidNotBranch();
         }
@@ -348,9 +364,9 @@ namespace Mips.Emulator.UnitTest
         {
             target.Registers[4] = 0;
             const uint offset = 1024;
-            PushInstruction(new FormatI(0b00_0110, 4, 0b0_0001, offset));
+            PushFormatI(0b00_0110, 4, 0b0_0001, offset);
 
-            target.FIE();
+            target.CycleOnce();
 
             AssertDidBranch(offset);
         }
@@ -360,9 +376,9 @@ namespace Mips.Emulator.UnitTest
         {
             target.Registers[4] = 0xFFFFFFFF;  // -1
             const uint offset = 1024;
-            PushInstruction(new FormatI(0b00_0110, 4, 0b0_0001, offset));
+            PushFormatI(0b00_0110, 4, 0b0_0001, offset);
 
-            target.FIE();
+            target.CycleOnce();
 
             AssertDidBranch(offset);
         }
@@ -372,9 +388,9 @@ namespace Mips.Emulator.UnitTest
         {
             target.Registers[4] = 1;
             const uint offset = 1024;
-            PushInstruction(new FormatI(0b00_0001, 4, 0b0_0000, offset));
+            PushFormatI(0b00_0001, 4, 0b0_0000, offset);
 
-            target.FIE();
+            target.CycleOnce();
 
             AssertDidNotBranch();
         }
@@ -384,9 +400,9 @@ namespace Mips.Emulator.UnitTest
         {
             target.Registers[4] = 0;
             const uint offset = 1024;
-            PushInstruction(new FormatI(0b00_0001, 4, 0b0_0000, offset));
+            PushFormatI(0b00_0001, 4, 0b0_0000, offset);
 
-            target.FIE();
+            target.CycleOnce();
 
             AssertDidNotBranch();
         }
@@ -396,9 +412,9 @@ namespace Mips.Emulator.UnitTest
         {
             target.Registers[4] = 0xFFFFFFFF;  // -1
             const uint offset = 1024;
-            PushInstruction(new FormatI(0b00_0001, 4, 0b0_0000, offset));
+            PushFormatI(0b00_0001, 4, 0b0_0000, offset);
 
-            target.FIE();
+            target.CycleOnce();
 
             AssertDidBranch(offset);
         }
@@ -408,9 +424,9 @@ namespace Mips.Emulator.UnitTest
         {
             target.Registers[4] = 1;
             const uint offset = 1024;
-            PushInstruction(new FormatI(0b00_0001, 4, 0b1_0000, offset));
+            PushFormatI(0b00_0001, 4, 0b1_0000, offset);
 
-            target.FIE();
+            target.CycleOnce();
 
             AssertDidNotBranch();
         }
@@ -420,9 +436,9 @@ namespace Mips.Emulator.UnitTest
         {
             target.Registers[4] = 0;
             const uint offset = 1024;
-            PushInstruction(new FormatI(0b00_0001, 4, 0b1_0000, offset));
+            PushFormatI(0b00_0001, 4, 0b1_0000, offset);
 
-            target.FIE();
+            target.CycleOnce();
 
             AssertDidNotBranch();
         }
@@ -432,9 +448,9 @@ namespace Mips.Emulator.UnitTest
         {
             target.Registers[4] = 0xFFFFFFFF;  // -1
             const uint offset = 1024;
-            PushInstruction(new FormatI(0b00_0001, 4, 0b1_0000, offset));
+            PushFormatI(0b00_0001, 4, 0b1_0000, offset);
 
-            target.FIE();
+            target.CycleOnce();
 
             AssertDidBranchAndLink(offset);
         }
@@ -445,9 +461,9 @@ namespace Mips.Emulator.UnitTest
             target.Registers[4] = 123;
             target.Registers[5] = 123;
             const uint offset = 1024;
-            PushInstruction(new FormatI(0b00_0101, 4, 5, offset));
+            PushFormatI(0b00_0101, 4, 5, offset);
 
-            target.FIE();
+            target.CycleOnce();
 
             AssertDidNotBranch();
         }
@@ -458,9 +474,9 @@ namespace Mips.Emulator.UnitTest
             target.Registers[4] = 123;
             target.Registers[5] = 900;
             const uint offset = 1024;
-            PushInstruction(new FormatI(0b00_0101, 4, 5, offset));
+            PushFormatI(0b00_0101, 4, 5, offset);
 
-            target.FIE();
+            target.CycleOnce();
 
             AssertDidBranch(offset);
         }
@@ -471,9 +487,9 @@ namespace Mips.Emulator.UnitTest
             // 220 : 12 = 18 R 4
             target.Registers[4] = 220;
             target.Registers[5] = 12;
-            PushInstruction(new FormatR(4, 5, 0, 0, 0b01_1010));
+            PushFormatR(4, 5, 0, 0, 0b01_1010);
 
-            target.FIE();
+            target.CycleOnce();
 
             Assert.AreEqual(18u, target.Registers.Lo);
             Assert.AreEqual(4u, target.Registers.Hi);
@@ -484,9 +500,9 @@ namespace Mips.Emulator.UnitTest
         {
             target.Registers[4] = unchecked((uint)-220);
             target.Registers[5] = 12;
-            PushInstruction(new FormatR(4, 5, 0, 0, 0b01_1010));
+            PushFormatR(4, 5, 0, 0, 0b01_1010);
 
-            target.FIE();
+            target.CycleOnce();
 
             Assert.AreEqual(unchecked((uint)-18), target.Registers.Lo);
             Assert.AreEqual(unchecked((uint)-4), target.Registers.Hi);
@@ -497,9 +513,9 @@ namespace Mips.Emulator.UnitTest
         {
             target.Registers[4] = 220;
             target.Registers[5] = unchecked((uint)-12);
-            PushInstruction(new FormatR(4, 5, 0, 0, 0b01_1010));
+            PushFormatR(4, 5, 0, 0, 0b01_1010);
 
-            target.FIE();
+            target.CycleOnce();
 
             Assert.AreEqual(unchecked((uint)-18), target.Registers.Lo);
             Assert.AreEqual(4u, target.Registers.Hi);
@@ -509,9 +525,9 @@ namespace Mips.Emulator.UnitTest
         {
             target.Registers[4] = unchecked((uint)-220);
             target.Registers[5] = unchecked((uint)-12);
-            PushInstruction(new FormatR(4, 5, 0, 0, 0b01_1010));
+            PushFormatR(4, 5, 0, 0, 0b01_1010);
 
-            target.FIE();
+            target.CycleOnce();
 
             Assert.AreEqual(18u, target.Registers.Lo);
             Assert.AreEqual(unchecked((uint)-4), target.Registers.Hi);
@@ -523,9 +539,9 @@ namespace Mips.Emulator.UnitTest
             // 4,294,967,295 : 12 = 357,913,941 R 3
             target.Registers[4] = 4294967295;
             target.Registers[5] = 12;
-            PushInstruction(new FormatR(4, 5, 0, 0, 0b01_1011));
+            PushFormatR(4, 5, 0, 0, 0b01_1011);
 
-            target.FIE();
+            target.CycleOnce();
 
             Assert.AreEqual(357_913_941u, target.Registers.Lo);
             Assert.AreEqual(3u, target.Registers.Hi);
@@ -535,9 +551,9 @@ namespace Mips.Emulator.UnitTest
         public void J()
         {
             uint offset = 0xBEE5;
-            PushInstruction(new FormatJ(offset, false));
+            PushFormatJ(offset, false);
 
-            target.FIE();
+            target.CycleOnce();
 
             AssertDidJump(offset);
         }
@@ -546,9 +562,9 @@ namespace Mips.Emulator.UnitTest
         public void J_0()
         {
             uint offset = 0;
-            PushInstruction(new FormatJ(offset, false));
+            PushFormatJ(offset, false);
 
-            target.FIE();
+            target.CycleOnce();
 
             AssertDidJump(offset);
         }
@@ -558,9 +574,9 @@ namespace Mips.Emulator.UnitTest
         public void JAL()
         {
             uint offset = 0xBEE5;
-            PushInstruction(new FormatJ(offset, true));
+            PushFormatJ(offset, true);
 
-            target.FIE();
+            target.CycleOnce();
 
             AssertDidJumpAndLink(offset);
         }
@@ -569,9 +585,9 @@ namespace Mips.Emulator.UnitTest
         public void JAL_0()
         {
             uint offset = 0;
-            PushInstruction(new FormatJ(offset, true));
+            PushFormatJ(offset, true);
 
-            target.FIE();
+            target.CycleOnce();
 
             AssertDidJumpAndLink(offset);
         }
@@ -583,7 +599,7 @@ namespace Mips.Emulator.UnitTest
             // jump to the address in register  10_0000  ($s0)
             target.Memory.StoreWord(0, 0b0000_0010_0000_0000_0000_0000_0000_1000);
 
-            target.FIE();
+            target.CycleOnce();
 
             Assert.AreEqual(0xDEADBEEF, target.Pc);
         }
@@ -595,9 +611,9 @@ namespace Mips.Emulator.UnitTest
             const byte value = 0xAB;
             target.Memory[address] = value;
             target.Registers[4] = address;
-            PushInstruction(new FormatI(0b10_0000, 4, 6, 0));
+            PushFormatI(0b10_0000, 4, 6, 0);
 
-            target.FIE();
+            target.CycleOnce();
 
             Assert.AreEqual(value, target.Registers[6]);
         }
@@ -607,9 +623,9 @@ namespace Mips.Emulator.UnitTest
         {
             const uint value = 0xabcd;
             const uint expected = value << 16;
-            PushInstruction(new FormatI(0b00_1111, 0, 6, value));
+            PushFormatI(0b00_1111, 0, 6, value);
 
-            target.FIE();
+            target.CycleOnce();
 
             Assert.AreEqual(expected, target.Registers[6]);
         }
@@ -621,9 +637,9 @@ namespace Mips.Emulator.UnitTest
             const uint value = 0xDEADBEEF;
             target.Memory.StoreWord(address, value);
             target.Registers[4] = address;
-            PushInstruction(new FormatI(0b10_0011, 4, 6, 0));
+            PushFormatI(0b10_0011, 4, 6, 0);
 
-            target.FIE();
+            target.CycleOnce();
 
             Assert.AreEqual(value, target.Registers[6]);
         }
@@ -633,9 +649,9 @@ namespace Mips.Emulator.UnitTest
         {
             const uint value = 0xDEADBEEF;
             target.Registers.Hi = value;
-            PushInstruction(new FormatR(0, 0, 6, 0, 0b01_0000));
+            PushFormatR(0, 0, 6, 0, 0b01_0000);
 
-            target.FIE();
+            target.CycleOnce();
 
             Assert.AreEqual(value, target.Registers[6]);
         }
@@ -645,9 +661,9 @@ namespace Mips.Emulator.UnitTest
         {
             const uint value = 0xDEADBEEF;
             target.Registers.Lo = value;
-            PushInstruction(new FormatR(0, 0, 6, 0, 0b01_0010));
+            PushFormatR(0, 0, 6, 0, 0b01_0010);
 
-            target.FIE();
+            target.CycleOnce();
 
             Assert.AreEqual(value, target.Registers[6]);
         }
@@ -658,9 +674,9 @@ namespace Mips.Emulator.UnitTest
             // 0x1BADC0DE * 0x0DEDF00D = 0x1818C9B_2028EB46
             target.Registers[4] = 0x1BADC0DE;
             target.Registers[5] = 0x0DEDF00D;
-            PushInstruction(new FormatR(4, 5, 0, 0, 0b01_1000));
+            PushFormatR(4, 5, 0, 0, 0b01_1000);
 
-            target.FIE();
+            target.CycleOnce();
 
             Assert.AreEqual(0x2028EB46u, target.Registers.Lo);
             Assert.AreEqual(0x1818C9Bu, target.Registers.Hi);
@@ -671,9 +687,9 @@ namespace Mips.Emulator.UnitTest
         {
             target.Registers[4] = unchecked((uint)-0x1BADC0DE);
             target.Registers[5] = 0x0DEDF00D;
-            PushInstruction(new FormatR(4, 5, 0, 0, 0b01_1000));
+            PushFormatR(4, 5, 0, 0, 0b01_1000);
 
-            target.FIE();
+            target.CycleOnce();
 
             Assert.AreEqual(0xDFD714BAu, target.Registers.Lo);
             Assert.AreEqual(0xFE7E7364u, target.Registers.Hi);
@@ -684,9 +700,9 @@ namespace Mips.Emulator.UnitTest
         {
             target.Registers[4] = unchecked((uint)-0x1BADC0DE);
             target.Registers[5] = unchecked((uint)-0x0DEDF00D);
-            PushInstruction(new FormatR(4, 5, 0, 0, 0b01_1000));
+            PushFormatR(4, 5, 0, 0, 0b01_1000);
 
-            target.FIE();
+            target.CycleOnce();
 
             Assert.AreEqual(0x2028EB46u, target.Registers.Lo);
             Assert.AreEqual(0x1818C9Bu, target.Registers.Hi);
@@ -698,9 +714,9 @@ namespace Mips.Emulator.UnitTest
             // 0x1BADC0DE * 0x0DEDF00D = 0x1818C9B_2028EB46
             target.Registers[4] = 0x1BADC0DE;
             target.Registers[5] = 0x0DEDF00D;
-            PushInstruction(new FormatR(4, 5, 0, 0, 0b01_1001));
+            PushFormatR(4, 5, 0, 0, 0b01_1001);
 
-            target.FIE();
+            target.CycleOnce();
 
             Assert.AreEqual(0x2028EB46u, target.Registers.Lo);
             Assert.AreEqual(0x1818C9Bu, target.Registers.Hi);
@@ -712,9 +728,9 @@ namespace Mips.Emulator.UnitTest
             // 0xDEADBEEF * 0xFEEDC0DE = 0xDDBF320E_4F21D342
             target.Registers[4] = 0xDEADBEEF;
             target.Registers[5] = 0xFEEDC0DE;
-            PushInstruction(new FormatR(4, 5, 0, 0, 0b01_1001));
+            PushFormatR(4, 5, 0, 0, 0b01_1001);
 
-            target.FIE();
+            target.CycleOnce();
 
             Assert.AreEqual(0xDDBF320Eu, target.Registers.Hi);
             Assert.AreEqual(0x4F21D342u, target.Registers.Lo);
@@ -726,9 +742,9 @@ namespace Mips.Emulator.UnitTest
             target.Registers[4] = 0b1101_0011;
             target.Registers[5] = 0b1001_1010;
             const uint expected = 0b1101_1011;
-            PushInstruction(new FormatR(4, 5, 6, 0, 0b10_0101));
+            PushFormatR(4, 5, 6, 0, 0b10_0101);
 
-            target.FIE();
+            target.CycleOnce();
 
             Assert.AreEqual(expected, target.Registers[6]);
         }
@@ -739,9 +755,9 @@ namespace Mips.Emulator.UnitTest
             target.Registers[4] = 0b1101_0011;
             const uint inputVal = 0b1001_1010;
             const uint expected = 0b1101_1011;
-            PushInstruction(new FormatI(0b00_1101, 4, 6, inputVal));
+            PushFormatI(0b00_1101, 4, 6, inputVal);
 
-            target.FIE();
+            target.CycleOnce();
 
             Assert.AreEqual(expected, target.Registers[6]);
         }
@@ -753,9 +769,9 @@ namespace Mips.Emulator.UnitTest
             const byte value = 0xAB;
             target.Registers[4] = address;
             target.Registers[6] = value;
-            PushInstruction(new FormatI(0b10_1000, 4, 6, 0));
+            PushFormatI(0b10_1000, 4, 6, 0);
 
-            target.FIE();
+            target.CycleOnce();
 
             Assert.AreEqual(value, target.Memory[address]);
         }
@@ -767,9 +783,9 @@ namespace Mips.Emulator.UnitTest
             const int shamt = 1;
             const uint expected = 0b1_1010_0110;
             target.Registers[4] = value;
-            PushInstruction(new FormatR(0, 4, 6, shamt, 0b00_0000));
+            PushFormatR(0, 4, 6, shamt, 0b00_0000);
 
-            target.FIE();
+            target.CycleOnce();
 
             Assert.AreEqual(expected, target.Registers[6]);
         }
@@ -781,9 +797,9 @@ namespace Mips.Emulator.UnitTest
             const int shamt = 3;
             const uint expected = 0b110_1001_1000;
             target.Registers[4] = value;
-            PushInstruction(new FormatR(0, 4, 6, shamt, 0b00_0000));
+            PushFormatR(0, 4, 6, shamt, 0b00_0000);
 
-            target.FIE();
+            target.CycleOnce();
 
             Assert.AreEqual(expected, target.Registers[6]);
         }
@@ -796,9 +812,9 @@ namespace Mips.Emulator.UnitTest
             const uint expected = 0b1_1010_0110;
             target.Registers[4] = value;
             target.Registers[5] = shamt;
-            PushInstruction(new FormatR(5, 4, 6, 0, 0b00_0100));
+            PushFormatR(5, 4, 6, 0, 0b00_0100);
 
-            target.FIE();
+            target.CycleOnce();
 
             Assert.AreEqual(expected, target.Registers[6]);
         }
@@ -811,9 +827,9 @@ namespace Mips.Emulator.UnitTest
             const uint expected = 0b110_1001_1000;
             target.Registers[4] = value;
             target.Registers[5] = shamt;
-            PushInstruction(new FormatR(5, 4, 6, 0, 0b00_0100));
+            PushFormatR(5, 4, 6, 0, 0b00_0100);
 
-            target.FIE();
+            target.CycleOnce();
 
             Assert.AreEqual(expected, target.Registers[6]);
         }
@@ -825,9 +841,9 @@ namespace Mips.Emulator.UnitTest
             const uint lesserValue = 2400;
             target.Registers[4] = lesserValue;
             target.Registers[5] = greaterValue;
-            PushInstruction(new FormatR(4, 5, 6, 0, 0b10_1010));
+            PushFormatR(4, 5, 6, 0, 0b10_1010);
 
-            target.FIE();
+            target.CycleOnce();
 
             Assert.AreEqual(1u, target.Registers[6]);
         }
@@ -839,9 +855,9 @@ namespace Mips.Emulator.UnitTest
             const uint lesserValue = 2400;
             target.Registers[4] = greaterValue;
             target.Registers[5] = lesserValue;
-            PushInstruction(new FormatR(4, 5, 6, 0, 0b10_1010));
+            PushFormatR(4, 5, 6, 0, 0b10_1010);
 
-            target.FIE();
+            target.CycleOnce();
 
             Assert.AreEqual(0u, target.Registers[6]);
         }
@@ -852,9 +868,9 @@ namespace Mips.Emulator.UnitTest
             const uint value = 2400;
             target.Registers[4] = value;
             target.Registers[5] = value;
-            PushInstruction(new FormatR(4, 5, 6, 0, 0b10_1010));
+            PushFormatR(4, 5, 6, 0, 0b10_1010);
 
-            target.FIE();
+            target.CycleOnce();
 
             Assert.AreEqual(0u, target.Registers[6]);
         }
@@ -866,9 +882,9 @@ namespace Mips.Emulator.UnitTest
             const uint lesserValue = unchecked((uint)-7800);
             target.Registers[4] = lesserValue;
             target.Registers[5] = greaterValue;
-            PushInstruction(new FormatR(4, 5, 6, 0, 0b10_1010));
+            PushFormatR(4, 5, 6, 0, 0b10_1010);
 
-            target.FIE();
+            target.CycleOnce();
 
             Assert.AreEqual(1u, target.Registers[6]);
         }
@@ -880,9 +896,9 @@ namespace Mips.Emulator.UnitTest
             const uint lesserValue = unchecked((uint)-7800);
             target.Registers[4] = greaterValue;
             target.Registers[5] = lesserValue;
-            PushInstruction(new FormatR(4, 5, 6, 0, 0b10_1010));
+            PushFormatR(4, 5, 6, 0, 0b10_1010);
 
-            target.FIE();
+            target.CycleOnce();
 
             Assert.AreEqual(0u, target.Registers[6]);
         }
@@ -893,9 +909,9 @@ namespace Mips.Emulator.UnitTest
             const uint greaterValue = 7800;
             const uint lesserValue = 2400;
             target.Registers[4] = lesserValue;
-            PushInstruction(new FormatI(0b00_1010, 4, 6, greaterValue));
+            PushFormatI(0b00_1010, 4, 6, greaterValue);
 
-            target.FIE();
+            target.CycleOnce();
 
             Assert.AreEqual(1u, target.Registers[6]);
         }
@@ -906,9 +922,9 @@ namespace Mips.Emulator.UnitTest
             const uint greaterValue = 7800;
             const uint lesserValue = 2400;
             target.Registers[4] = greaterValue;
-            PushInstruction(new FormatI(0b00_1010, 4, 6, lesserValue));
+            PushFormatI(0b00_1010, 4, 6, lesserValue);
 
-            target.FIE();
+            target.CycleOnce();
 
             Assert.AreEqual(0u, target.Registers[6]);
         }
@@ -918,9 +934,9 @@ namespace Mips.Emulator.UnitTest
         {
             const uint value = 7800;
             target.Registers[4] = value;
-            PushInstruction(new FormatI(0b00_1010, 4, 6, value));
+            PushFormatI(0b00_1010, 4, 6, value);
 
-           target.FIE();
+           target.CycleOnce();
 
             Assert.AreEqual(0u, target.Registers[6]);
         }
@@ -932,9 +948,9 @@ namespace Mips.Emulator.UnitTest
             const uint lesserValue = 2400;
             target.Registers[4] = lesserValue;
             target.Registers[5] = greaterValue;
-            PushInstruction(new FormatR(4, 5, 6, 0, 0b10_1011));
+            PushFormatR(4, 5, 6, 0, 0b10_1011);
 
-            target.FIE();
+            target.CycleOnce();
 
             Assert.AreEqual(1u, target.Registers[6]);
         }
@@ -946,9 +962,9 @@ namespace Mips.Emulator.UnitTest
             const uint lesserValue = 2400;
             target.Registers[4] = greaterValue;
             target.Registers[5] = lesserValue;
-            PushInstruction(new FormatR(4, 5, 6, 0, 0b10_1011));
+            PushFormatR(4, 5, 6, 0, 0b10_1011);
 
-            target.FIE();
+            target.CycleOnce();
 
             Assert.AreEqual(0u, target.Registers[6]);
         }
@@ -959,9 +975,9 @@ namespace Mips.Emulator.UnitTest
             const uint value = 2400;
             target.Registers[4] = value;
             target.Registers[5] = value;
-            PushInstruction(new FormatR(4, 5, 6, 0, 0b10_1011));
+            PushFormatR(4, 5, 6, 0, 0b10_1011);
 
-            target.FIE();
+            target.CycleOnce();
 
             Assert.AreEqual(0u, target.Registers[6]);
         }
@@ -975,9 +991,9 @@ namespace Mips.Emulator.UnitTest
             const uint lesserValue = 2400;
             target.Registers[4] = lesserValue;
             target.Registers[5] = greaterValue;
-            PushInstruction(new FormatR(4, 5, 6, 0, 0b10_1011));
+            PushFormatR(4, 5, 6, 0, 0b10_1011);
 
-            target.FIE();
+            target.CycleOnce();
 
             Assert.AreEqual(1u, target.Registers[6]);
         }
@@ -989,9 +1005,9 @@ namespace Mips.Emulator.UnitTest
             const uint lesserValue = unchecked((uint)-7800);
             target.Registers[4] = greaterValue;
             target.Registers[5] = lesserValue;
-            PushInstruction(new FormatR(4, 5, 6, 0, 0b10_1011));
+            PushFormatR(4, 5, 6, 0, 0b10_1011);
 
-            target.FIE();
+            target.CycleOnce();
 
             Assert.AreEqual(0u, target.Registers[6]);
         }
@@ -1002,9 +1018,9 @@ namespace Mips.Emulator.UnitTest
             const uint greaterValue = 7800;
             const uint lesserValue = 2400;
             target.Registers[4] = lesserValue;
-            PushInstruction(new FormatI(0b00_1011, 4, 6, greaterValue));
+            PushFormatI(0b00_1011, 4, 6, greaterValue);
 
-            target.FIE();
+            target.CycleOnce();
 
             Assert.AreEqual(1u, target.Registers[6]);
         }
@@ -1015,9 +1031,9 @@ namespace Mips.Emulator.UnitTest
             const uint greaterValue = 7800;
             const uint lesserValue = 2400;
             target.Registers[4] = greaterValue;
-            PushInstruction(new FormatI(0b00_1011, 4, 6, lesserValue));
+            PushFormatI(0b00_1011, 4, 6, lesserValue);
 
-            target.FIE();
+            target.CycleOnce();
 
             Assert.AreEqual(0u, target.Registers[6]);
         }
@@ -1027,9 +1043,9 @@ namespace Mips.Emulator.UnitTest
         {
             const uint value = 7800;
             target.Registers[4] = value;
-            PushInstruction(new FormatI(0b00_1011, 4, 6, value));
+            PushFormatI(0b00_1011, 4, 6, value);
 
-            target.FIE();
+            target.CycleOnce();
 
             Assert.AreEqual(0u, target.Registers[6]);
         }
@@ -1041,9 +1057,9 @@ namespace Mips.Emulator.UnitTest
             const int shamt = 3;
             const uint expected = 0b0000_0001_1010;
             target.Registers[4] = value;
-            PushInstruction(new FormatR(0, 4, 6, shamt, 0b00_0011));
+            PushFormatR(0, 4, 6, shamt, 0b00_0011);
 
-            target.FIE();
+            target.CycleOnce();
 
             Assert.AreEqual(expected, target.Registers[6]);
         }
@@ -1056,9 +1072,9 @@ namespace Mips.Emulator.UnitTest
             const int shamt = 3;
             const uint expected = 0b1111_0000_0000_0000_0000_0000_0001_1010;
             target.Registers[4] = value;
-            PushInstruction(new FormatR(0, 4, 6, shamt, 0b00_0011));
+            PushFormatR(0, 4, 6, shamt, 0b00_0011);
 
-            target.FIE();
+            target.CycleOnce();
 
             Assert.AreEqual(expected, target.Registers[6]);
         }
@@ -1070,9 +1086,9 @@ namespace Mips.Emulator.UnitTest
             const int shamt = 3;
             const uint expected = 0b0000_0001_1010;
             target.Registers[4] = value;
-            PushInstruction(new FormatR(0, 4, 6, shamt, 0b00_0010));
+            PushFormatR(0, 4, 6, shamt, 0b00_0010);
 
-            target.FIE();
+            target.CycleOnce();
 
             Assert.AreEqual(expected, target.Registers[6]);
         }
@@ -1085,9 +1101,9 @@ namespace Mips.Emulator.UnitTest
             const int shamt = 3;
             const uint expected = 0b0001_0000_0000_0000_0000_0000_0001_1010;
             target.Registers[4] = value;
-            PushInstruction(new FormatR(0, 4, 6, shamt, 0b00_0010));
+            PushFormatR(0, 4, 6, shamt, 0b00_0010);
 
-            target.FIE();
+            target.CycleOnce();
 
             Assert.AreEqual(expected, target.Registers[6]);
         }
@@ -1100,9 +1116,9 @@ namespace Mips.Emulator.UnitTest
             const uint expected = 0b0000_0001_1010;
             target.Registers[4] = value;
             target.Registers[5] = shamt;
-            PushInstruction(new FormatR(5, 4, 6, 0, 0b00_0110));
+            PushFormatR(5, 4, 6, 0, 0b00_0110);
 
-            target.FIE();
+            target.CycleOnce();
 
             Assert.AreEqual(expected, target.Registers[6]);
         }
@@ -1116,9 +1132,9 @@ namespace Mips.Emulator.UnitTest
             const uint expected = 0b0001_0000_0000_0000_0000_0000_0001_1010;
             target.Registers[4] = value;
             target.Registers[5] = shamt;
-            PushInstruction(new FormatR(5, 4, 6, 0, 0b00_0110));
+            PushFormatR(5, 4, 6, 0, 0b00_0110);
 
-            target.FIE();
+            target.CycleOnce();
 
             Assert.AreEqual(expected, target.Registers[6]);
         }
@@ -1128,9 +1144,9 @@ namespace Mips.Emulator.UnitTest
         {
             target.Registers[4] = 234;
             target.Registers[5] = 123;
-            PushInstruction(new FormatR(4, 5, 6, 0, 0b10_0010));
+            PushFormatR(4, 5, 6, 0, 0b10_0010);
 
-            target.FIE();
+            target.CycleOnce();
 
             Assert.AreEqual(234u - 123u, target.Registers[6]);
         }
@@ -1141,9 +1157,9 @@ namespace Mips.Emulator.UnitTest
         {
             target.Registers[4] = unchecked((uint)int.MinValue);
             target.Registers[5] = 234;
-            PushInstruction(new FormatR(4, 5, 6, 0, 0b10_0010));
+            PushFormatR(4, 5, 6, 0, 0b10_0010);
 
-            target.FIE();
+            target.CycleOnce();
         }
 
         [TestMethod]
@@ -1151,9 +1167,9 @@ namespace Mips.Emulator.UnitTest
         {
             target.Registers[4] = 234;
             target.Registers[5] = 123;
-            PushInstruction(new FormatR(4, 5, 6, 0, 0b10_0011));
+            PushFormatR(4, 5, 6, 0, 0b10_0011);
 
-            target.FIE();
+            target.CycleOnce();
 
             Assert.AreEqual(234u - 123u, target.Registers[6]);
         }
@@ -1164,9 +1180,9 @@ namespace Mips.Emulator.UnitTest
             uint minuend = unchecked((uint)int.MinValue);
             target.Registers[4] = minuend;
             target.Registers[5] = 234;
-            PushInstruction(new FormatR(4, 5, 6, 0, 0b10_0011));
+            PushFormatR(4, 5, 6, 0, 0b10_0011);
 
-            target.FIE();
+            target.CycleOnce();
 
             Assert.AreEqual(minuend - 234u, target.Registers[6]);
         }
@@ -1178,9 +1194,9 @@ namespace Mips.Emulator.UnitTest
             const uint value = 0xABCDEF01;
             target.Registers[4] = address;
             target.Registers[6] = value;
-            PushInstruction(new FormatI(0b10_1011, 4, 6, 0));
+            PushFormatI(0b10_1011, 4, 6, 0);
 
-            target.FIE();
+            target.CycleOnce();
 
             Assert.AreEqual(value, target.Memory.LoadWord(address));
         }
@@ -1191,9 +1207,9 @@ namespace Mips.Emulator.UnitTest
             target.Registers[4] = 0b1101_0011;
             target.Registers[5] = 0b1001_1010;
             const uint expected = 0b0100_1001;
-            PushInstruction(new FormatR(4, 5, 6, 0, 0b10_0110));
+            PushFormatR(4, 5, 6, 0, 0b10_0110);
 
-            target.FIE();
+            target.CycleOnce();
 
             Assert.AreEqual(expected, target.Registers[6]);
         }
@@ -1204,9 +1220,9 @@ namespace Mips.Emulator.UnitTest
             target.Registers[4] = 0b1101_0011;
             const uint inputVal = 0b1001_1010;
             const uint expected = 0b0100_1001;
-            PushInstruction(new FormatI(0b00_1110, 4, 6, inputVal));
+            PushFormatI(0b00_1110, 4, 6, inputVal);
 
-            target.FIE();
+            target.CycleOnce();
 
             Assert.AreEqual(expected, target.Registers[6]);
         }
