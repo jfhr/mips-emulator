@@ -11,7 +11,7 @@ namespace Mips.Emulator
     /// on demand.
     /// All operations with words use big-endian byte order.
     /// </remarks>
-    public class Memory
+    public class Memory : IMemory
     {
         /// <summary>
         /// Size of a memory page in bytes (1 MiB).
