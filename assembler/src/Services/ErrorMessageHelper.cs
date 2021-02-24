@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace Mips.Assembler
+namespace Mips.Assembler.Services
 {
     /// <summary>
     /// Keeps track of error messages.

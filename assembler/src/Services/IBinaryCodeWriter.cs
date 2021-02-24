@@ -1,4 +1,4 @@
-﻿namespace Mips.Assembler
+﻿namespace Mips.Assembler.Services
 {
     /// <summary>
     /// Writes binary code output into a memory instance.

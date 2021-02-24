@@ -1,6 +1,6 @@
 ﻿namespace Mips.Emulator
 {
-    public class RegisterSet
+    public class RegisterSet : IRegisterSet
     {
         private readonly uint[] reg;
 

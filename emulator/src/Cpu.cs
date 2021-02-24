@@ -14,24 +14,24 @@ namespace Mips.Emulator
         /// <summary>
         /// The complete Register set, including hi and lo.
         /// </summary>
-        public RegisterSet Registers { get; }
+        public IRegisterSet Registers { get; }
 
         /// <summary>
         /// The computer memory. Up to 4 GiB are available,
         /// but not all virtual space may actually be 
         /// physically allocated.
         /// </summary>
-        public Memory Memory { get; }
+        public IMemory Memory { get; }
 
         /// <summary>
         /// The program counter.
         /// </summary>
         public uint Pc { get; private set; }
 
-        public Cpu()
+        public Cpu(IMemory memory, IRegisterSet registerSet)
         {
-            Registers = new RegisterSet();
-            Memory = new Memory();
+            Memory = memory;
+            Registers = registerSet;
         }
 
         /// <summary>
@@ -152,6 +152,9 @@ namespace Mips.Emulator
                         Registers.Hi = (uint)(result >> 32);
                         break;
                     }
+                case 0b100111:  // nor
+                    Registers[rd] = ~(Registers[rs] | Registers[rt]);
+                    break;
                 case 0b100101:  // or
                     Registers[rd] = Registers[rs] | Registers[rt];
                     break;

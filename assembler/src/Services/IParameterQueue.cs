@@ -1,4 +1,4 @@
-﻿namespace Mips.Assembler
+﻿namespace Mips.Assembler.Services
 {
     public interface IParameterQueue
     {

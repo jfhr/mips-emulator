@@ -1,4 +1,4 @@
-﻿namespace Mips.Assembler
+﻿namespace Mips.Assembler.Mnemonics
 {
     public interface IMnemonic
     {

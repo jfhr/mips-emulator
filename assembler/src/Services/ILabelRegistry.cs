@@ -1,11 +1,11 @@
 ﻿using System;
 
-namespace Mips.Assembler
+namespace Mips.Assembler.Services
 {
     /// <summary>
     /// Keeps track of labels and writes instructions into the binary code output.
     /// </summary>
-    public interface ITokenBroker
+    public interface ILabelRegistry
     {
         /// <summary>
         /// Add a label definition. If the same label was defined before, cause an error message.
