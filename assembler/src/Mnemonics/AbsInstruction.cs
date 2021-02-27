@@ -1,53 +1,38 @@
-﻿using Mips.Assembler.Services;
-using System;
+﻿using System;
 
 namespace Mips.Assembler.Mnemonics
 {
     public abstract class AbsInstruction : IMnemonic
     {
+        protected readonly InstructionDescriptor ins;
+        protected readonly AssemblerServiceContainer services;
+
         protected abstract IMnemonic[] Parameters { get; }
 
-        private readonly string instructionName;
-        protected readonly IParameterQueue parameterQueue;
-        protected readonly ILabelRegistry labelRegistry;
-        protected readonly IBinaryCodeWriter binaryCodeWriter;
 
-        protected readonly IMnemonic whitespace;
-        protected readonly IMnemonic comma;
-
-        public AbsInstruction(
-            string instructionName,
-            IParameterQueue parameterQueue,
-            ILabelRegistry labelRegistry,
-            IBinaryCodeWriter binaryCodeWriter,
-            IMnemonic whitespace,
-            IMnemonic comma)
+        public AbsInstruction(InstructionDescriptor ins, AssemblerServiceContainer services)
         {
-            this.instructionName = instructionName;
-            this.parameterQueue = parameterQueue;
-            this.labelRegistry = labelRegistry;
-            this.binaryCodeWriter = binaryCodeWriter;
-            this.whitespace = whitespace;
-            this.comma = comma;
+            this.ins = ins;
+            this.services = services;
         }
 
         public int TryRead(string code, int startIndex)
         {
             // clear parameters
-            parameterQueue.Clear();
+            services.ParameterQueue.Clear();
 
             // read instruction name
-            for (int i = 0; i < instructionName.Length; i++)
+            for (int i = 0; i < ins.Name.Length; i++)
             {
-                if (startIndex + i >= code.Length || instructionName[i] != code[startIndex + i])
+                if (startIndex + i >= code.Length || ins.Name[i] != code[startIndex + i])
                 {
                     return startIndex;
                 }
             }
 
             // read parameters
-            int index = startIndex + instructionName.Length;
-            index = whitespace.TryRead(code, index);
+            int index = startIndex + ins.Name.Length;
+            index = services.Whitespace.TryRead(code, index);
 
             for (int p = 0; p < Parameters.Length; p++)
             {
@@ -58,7 +43,7 @@ namespace Mips.Assembler.Mnemonics
                 }
 
                 // if this isn't the last parameter, try to read a comma
-                if (p != Parameters.Length - 1 && index == (index = comma.TryRead(code, index)))
+                if (p != Parameters.Length - 1 && index == (index = services.Comma.TryRead(code, index)))
                 {
                     // failed to read comma
                     return startIndex;
@@ -68,7 +53,8 @@ namespace Mips.Assembler.Mnemonics
             // instruction read successful
             if (TryEncode(out uint value))
             {
-                binaryCodeWriter.WriteWord(value);
+                services.BinaryCodeWriter.WriteWord(value);
+                services.MessageHelper.AddInfo(ins.Description, startIndex);
                 return index;
             }
 

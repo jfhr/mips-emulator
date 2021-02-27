@@ -1,4 +1,5 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Mips.Assembler.Services;
 
 namespace Mips.Assembler.UnitTest
 {

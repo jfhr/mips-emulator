@@ -35,7 +35,7 @@ namespace Mips.Assembler.UnitTest
         public void TestScalar(string code, int startIndex, int expectedIndex, int? expectedValue)
         {
             var parameterQueueMock = new Mock<IParameterQueue>(MockBehavior.Loose);
-            var target = Scalar.GetInstance(parameterQueueMock.Object);
+            var target = new Scalar(parameterQueueMock.Object);
 
             int actual = target.TryRead(code, startIndex);
 
@@ -45,12 +45,6 @@ namespace Mips.Assembler.UnitTest
                 parameterQueueMock.Verify(x => x.AddSigned((int)expectedValue));
             }
             parameterQueueMock.VerifyNoOtherCalls();
-        }
-
-        [TestCleanup]
-        public void Cleanup()
-        {
-            Scalar.ResetInstance();
         }
     }
 }

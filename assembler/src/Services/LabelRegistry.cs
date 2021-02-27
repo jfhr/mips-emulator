@@ -21,13 +21,13 @@ namespace Mips.Assembler.Services
 
         private readonly List<LabelAction> labelActions = new List<LabelAction>();
         private readonly Dictionary<string, uint> labels = new Dictionary<string, uint>();
-        private readonly IErrorMessageHelper errorMessageHelper;
+        private readonly IMessageHelper messageHelper;
         private readonly IBinaryCodeWriter binaryCodeWriter;
 
-        public LabelRegistry(IErrorMessageHelper errorMessageHelper, IBinaryCodeWriter binaryCodeWriter)
+        public LabelRegistry(IMessageHelper messageHelper, IBinaryCodeWriter binaryCodeWriter)
         {
-            this.errorMessageHelper = errorMessageHelper;
-            this.binaryCodeWriter = binaryCodeWriter;
+            this.messageHelper = messageHelper ?? throw new ArgumentNullException(nameof(messageHelper));
+            this.binaryCodeWriter = binaryCodeWriter ?? throw new ArgumentNullException(nameof(binaryCodeWriter));
         }
 
         public void PushInstruction(uint instruction)
@@ -39,7 +39,7 @@ namespace Mips.Assembler.Services
         {
             if (labels.ContainsKey(name))
             {
-                errorMessageHelper.Add(ErrorMessageType.LabelDefinedMultipleTimes, indexInCode);
+                messageHelper.AddError(ErrorMessages.LabelDefinedMultipleTimes, indexInCode);
             }
             else
             {
@@ -69,7 +69,7 @@ namespace Mips.Assembler.Services
                 }
                 else
                 {
-                    errorMessageHelper.Add(ErrorMessageType.LabelNotDefined, a.IndexInCode);
+                    messageHelper.AddError(ErrorMessages.LabelNotDefined, a.IndexInCode);
                 }
             }
         }

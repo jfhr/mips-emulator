@@ -23,7 +23,7 @@ namespace Mips.Assembler.UnitTest
         [DynamicData(nameof(WhitespaceTestData))]
         public void TestWhitespace(string code, int startIndex, int expectedIndex)
         {
-            int actual = Whitespace.Instance.TryRead(code, startIndex);
+            int actual = new Whitespace().TryRead(code, startIndex);
             Assert.AreEqual(expectedIndex, actual);
         }
 
@@ -42,7 +42,7 @@ namespace Mips.Assembler.UnitTest
         [DynamicData(nameof(CommaTestData))]
         public void TestComma(string code, int startIndex, int expectedIndex)
         {
-            int actual = Comma.Instance.TryRead(code, startIndex);
+            int actual = new Comma(new Whitespace()).TryRead(code, startIndex);
             Assert.AreEqual(expectedIndex, actual);
         }
 

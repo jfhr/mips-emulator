@@ -3,17 +3,17 @@
 namespace Mips.Assembler.Mnemonics
 {
     /// <summary>
-    /// Format R with 3 registers ($d, $s, $t)
+    /// Format I with two registers and an immediate value ($t, $s, i)
     /// </summary>
-    public class ArithLogInstruction : AbsInstruction
+    public class ArithLogIInstruction : AbsInstruction
     {
-        public ArithLogInstruction(InstructionDescriptor ins, AssemblerServiceContainer services) : base(ins, services)
+        public ArithLogIInstruction(InstructionDescriptor ins, AssemblerServiceContainer services) : base(ins, services)
         {
             Parameters = new IMnemonic[]
             {
                 services.Register,
                 services.Register,
-                services.Register,
+                services.Scalar,
             };
         }
 
@@ -21,11 +21,11 @@ namespace Mips.Assembler.Mnemonics
 
         protected override bool TryEncode(out uint value)
         {
-            if (services.ParameterQueue.TryGetSigned(out int rd)
+            if (services.ParameterQueue.TryGetSigned(out int rt)
                 && services.ParameterQueue.TryGetSigned(out int rs)
-                && services.ParameterQueue.TryGetSigned(out int rt))
+                && services.ParameterQueue.TryGetUnsigned(out uint immed))
             {
-                value = OperationEncoder.EncodeFormatR(rs, rt, rd, 0, ins.FunctionOrOpcode);
+                value = OperationEncoder.EncodeFormatI(ins.FunctionOrOpcode, rs, rt, immed);
                 return true;
             }
             value = 0;

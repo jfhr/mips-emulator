@@ -42,7 +42,7 @@ namespace Mips.Assembler.UnitTest
         public void TestRegister(string code, int startIndex, int expectedIndex, int? expectedRegisterIndex)
         {
             var parameterQueueMock = new Mock<IParameterQueue>(MockBehavior.Loose);
-            var target = Register.GetInstance(parameterQueueMock.Object);
+            var target = new Register(parameterQueueMock.Object);
 
             int actual = target.TryRead(code, startIndex);
 
@@ -52,12 +52,6 @@ namespace Mips.Assembler.UnitTest
                 parameterQueueMock.Verify(x => x.AddSigned((int)expectedRegisterIndex));
             }
             parameterQueueMock.VerifyNoOtherCalls();
-        }
-
-        [TestCleanup]
-        public void Cleanup()
-        {
-            Register.ResetInstance();
         }
     }
 }

@@ -15,7 +15,7 @@ namespace Mips.Emulator.ComponentTest
         [TestInitialize]
         public void Initialize()
         {
-            target = new Cpu();
+            target = new Cpu(new Memory(), new RegisterSet());
         }
 
         /// <summary>

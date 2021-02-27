@@ -38,7 +38,7 @@ namespace Mips.Emulator.UnitTest
         private void AssertDidBranchAndLink(uint offset)
         {
             AssertDidBranch(offset);
-            Assert.AreEqual(4u, target.Registers.Ra, "CPU did not link back when it should have.");
+            AssertDidLink();
         }
 
         /// <summary>
@@ -51,6 +51,11 @@ namespace Mips.Emulator.UnitTest
             Assert.AreEqual(expectedPc, target.Pc, "CPU jumped to a different location than it should have.");
         }
 
+        private void AssertDidLink()
+        {
+            Assert.AreEqual(4u, target.Registers.Ra, "CPU did not link back when it should have.");
+        }
+
         /// <summary>
         /// Asserts that the CPU jumped after the first instruction 
         /// and linked back and throws an <see cref="AssertFailedException"/> 
@@ -59,7 +64,7 @@ namespace Mips.Emulator.UnitTest
         private void AssertDidJumpAndLink(uint offset)
         {
             AssertDidJump(offset);
-            Assert.AreEqual(4u, target.Registers.Ra, "CPU did not link back when it should have.");
+            AssertDidLink();
         }
 
         /// <summary>
@@ -93,7 +98,7 @@ namespace Mips.Emulator.UnitTest
         [TestInitialize]
         public void Initialize()
         {
-            target = new Cpu();
+            target = new Cpu(new Memory(), new RegisterSet());
         }
 
 
@@ -605,10 +610,23 @@ namespace Mips.Emulator.UnitTest
         }
 
         [TestMethod]
+        public void JALR()
+        {
+            target.Registers.S0 = 0xDEADBEEF;
+            // jump to the address in register  10_0000  ($s0)
+            target.Memory.StoreWord(0, 0b0000_0010_0000_0000_0000_0000_0000_1001);
+
+            target.CycleOnce();
+
+            Assert.AreEqual(0xDEADBEEF, target.Pc);
+            AssertDidLink();
+        }
+
+        [TestMethod]
         public void LB()
         {
             const uint address = 0xF00BA;
-            const byte value = 0xAB;
+            const byte value = 0x0B;
             target.Memory[address] = value;
             target.Registers[4] = address;
             PushFormatI(0b10_0000, 4, 6, 0);
@@ -616,6 +634,111 @@ namespace Mips.Emulator.UnitTest
             target.CycleOnce();
 
             Assert.AreEqual(value, target.Registers[6]);
+        }
+
+        [TestMethod]
+        public void LB_Negative()
+        {
+            const uint address = 0xF00BA;
+            const byte value = 0xAB;
+            // lb is signed, so fill up with 1s
+            const uint valueSigned = 0xFFFF_FFAB;
+            target.Memory[address] = value;
+            target.Registers[4] = address;
+            PushFormatI(0b10_0000, 4, 6, 0);
+
+            target.CycleOnce();
+
+            Assert.AreEqual(valueSigned, target.Registers[6]);
+        }
+
+        [TestMethod]
+        public void LBU()
+        {
+            const uint address = 0xF00BA;
+            const byte value = 0x0B;
+            target.Memory[address] = value;
+            target.Registers[4] = address;
+            PushFormatI(0b10_0100, 4, 6, 0);
+
+            target.CycleOnce();
+
+            Assert.AreEqual(value, target.Registers[6]);
+        }
+
+        [TestMethod]
+        public void LBU_Negative()
+        {
+            const uint address = 0xF00BA;
+            const byte value = 0xAB;
+            const uint valueUnsigned = 0x0000_00AB;
+            target.Memory[address] = value;
+            target.Registers[4] = address;
+            PushFormatI(0b10_0100, 4, 6, 0);
+
+            target.CycleOnce();
+
+            Assert.AreEqual(valueUnsigned, target.Registers[6]);
+        }
+
+        [TestMethod]
+        public void LH()
+        {
+            const uint address = 0xF00BA;
+            const uint expected = 0x0000_0A0B;
+            target.Memory[address] = 0x0A;
+            target.Memory[address + 1] = 0x0B;
+            target.Registers[4] = address;
+            PushFormatI(0b10_0001, 4, 6, 0);
+
+            target.CycleOnce();
+
+            Assert.AreEqual(expected, target.Registers[6]);
+        }
+
+        [TestMethod]
+        public void LH_Negative()
+        {
+            const uint address = 0xF00BA;
+            const uint expected = 0xFFFF_AA0B;
+            target.Memory[address] = 0xAA;
+            target.Memory[address + 1] = 0x0B;
+            target.Registers[4] = address;
+            PushFormatI(0b10_0001, 4, 6, 0);
+
+            target.CycleOnce();
+
+            Assert.AreEqual(expected, target.Registers[6]);
+        }
+
+        [TestMethod]
+        public void LHU()
+        {
+            const uint address = 0xF00BA;
+            const uint expected = 0x0000_0A0B;
+            target.Memory[address] = 0x0A;
+            target.Memory[address + 1] = 0x0B;
+            target.Registers[4] = address;
+            PushFormatI(0b10_0101, 4, 6, 0);
+
+            target.CycleOnce();
+
+            Assert.AreEqual(expected, target.Registers[6]);
+        }
+
+        [TestMethod]
+        public void LHU_Negative()
+        {
+            const uint address = 0xF00BA;
+            const uint expected = 0x0000_AA0B;
+            target.Memory[address] = 0xAA;
+            target.Memory[address + 1] = 0x0B;
+            target.Registers[4] = address;
+            PushFormatI(0b10_0101, 4, 6, 0);
+
+            target.CycleOnce();
+
+            Assert.AreEqual(expected, target.Registers[6]);
         }
 
         [TestMethod]
@@ -737,6 +860,19 @@ namespace Mips.Emulator.UnitTest
         }
 
         [TestMethod]
+        public void NOR()
+        {
+            target.Registers[4] = 0b0000_0000_0000_0000_0000_0000_1101_0011;
+            target.Registers[5] = 0b0000_0000_0000_0000_0000_0000_1001_1010;
+            const uint expected = 0b1111_1111_1111_1111_1111_1111_0010_0100;
+            PushFormatR(4, 5, 6, 0, 0b10_0111);
+
+            target.CycleOnce();
+
+            Assert.AreEqual(expected, target.Registers[6]);
+        }
+
+        [TestMethod]
         public void OR()
         {
             target.Registers[4] = 0b1101_0011;
@@ -774,6 +910,23 @@ namespace Mips.Emulator.UnitTest
             target.CycleOnce();
 
             Assert.AreEqual(value, target.Memory[address]);
+        }
+
+        [TestMethod]
+        public void SH()
+        {
+            const uint address = 0xF00BA;
+            const uint value = 0xABCD;
+            const byte upper = 0xAB;
+            const byte lower = 0xCD;
+            target.Registers[4] = address;
+            target.Registers[6] = value;
+            PushFormatI(0b10_1001, 4, 6, 0);
+
+            target.CycleOnce();
+
+            Assert.AreEqual(upper, target.Memory[address]);
+            Assert.AreEqual(lower, target.Memory[address + 1]);
         }
 
         [TestMethod]

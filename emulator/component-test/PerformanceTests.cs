@@ -14,7 +14,7 @@ namespace Mips.Emulator.ComponentTest
             const int iterations = 1_000_000;
 
             var rng = new Random();
-            var cpu = new Cpu();
+            var cpu = new Cpu(new Memory(), new RegisterSet());
             var sw = new Stopwatch();
             uint index;
 

@@ -1,5 +1,4 @@
-﻿using Mips.Assembler.Services;
-using Mips.Emulator;
+﻿using Mips.Emulator;
 
 namespace Mips.Assembler.Mnemonics
 {
@@ -8,38 +7,25 @@ namespace Mips.Assembler.Mnemonics
     /// </summary>
     public class ShiftInstruction : AbsInstruction
     {
-        private readonly uint function;
-
-        public ShiftInstruction(
-            string instructionName,
-            uint function,
-            IParameterQueue parameterQueue,
-            ILabelRegistry labelRegistry,
-            IBinaryCodeWriter binaryCodeWriter,
-            IMnemonic whitespace,
-            IMnemonic comma,
-            IMnemonic register,
-            IMnemonic scalar)
-            : base(instructionName, parameterQueue, labelRegistry, binaryCodeWriter, whitespace, comma)
+        public ShiftInstruction(InstructionDescriptor ins, AssemblerServiceContainer services) : base(ins, services)
         {
             Parameters = new IMnemonic[]
             {
-                register,
-                register,
-                scalar,
+                services.Register,
+                services.Register,
+                services.Scalar,
             };
-            this.function = function;
         }
 
         protected override IMnemonic[] Parameters { get; }
 
         protected override bool TryEncode(out uint value)
         {
-            if (parameterQueue.TryGetSigned(out int rd)
-                && parameterQueue.TryGetSigned(out int rt)
-                && parameterQueue.TryGetSigned(out int shamt))
+            if (services.ParameterQueue.TryGetSigned(out int rd)
+                && services.ParameterQueue.TryGetSigned(out int rt)
+                && services.ParameterQueue.TryGetSigned(out int shamt))
             {
-                value = OperationEncoder.EncodeFormatR(0, rt, rd, shamt, function);
+                value = OperationEncoder.EncodeFormatR(0, rt, rd, shamt, ins.FunctionOrOpcode);
                 return true;
             }
             value = 0;

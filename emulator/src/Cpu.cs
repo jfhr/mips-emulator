@@ -128,6 +128,10 @@ namespace Mips.Emulator
                 case 0b001000:  // jr
                     Pc = Registers[rs];
                     break;
+                case 0b001001:  // jalr
+                    Link();
+                    Pc = Registers[rs];
+                    break;
                 case 0b010000:  // mfhi
                     Registers[rd] = Registers.Hi;
                     break;
@@ -172,6 +176,9 @@ namespace Mips.Emulator
                     break;
                 case 0b000011:  // sra
                     Registers[rd] = (uint)((int)Registers[rt] >> shamt);
+                    break;
+                case 0b000111:  // srav
+                    Registers[rd] = (uint)((int)Registers[rt] >> (int)Registers[rs]);
                     break;
                 case 0b000010:  // srl
                     Registers[rd] = Registers[rt] >> shamt;
@@ -286,7 +293,27 @@ namespace Mips.Emulator
                 case 0b100000:  // lb
                     {
                         uint address = value + Registers[rs];
+                        Registers[rt] = (uint)(sbyte)Memory[address];
+                        break;
+                    }
+                case 0b100100:  // lbu
+                    {
+                        uint address = value + Registers[rs];
                         Registers[rt] = Memory[address];
+                        break;
+                    }
+                case 0b100001:  // lh
+                    {
+                        uint address = value + Registers[rs];
+                        short upper = (short)(Memory[address] << 8);
+                        Registers[rt] = (uint)(upper + Memory[address + 1]);
+                        break;
+                    }
+                case 0b100101:  // lhu
+                    {
+                        uint address = value + Registers[rs];
+                        int upper = Memory[address] << 8;
+                        Registers[rt] = (uint)(upper + Memory[address + 1]);
                         break;
                     }
                 case 0b001111:  // lui
@@ -305,6 +332,13 @@ namespace Mips.Emulator
                     {
                         uint address = value + Registers[rs];
                         Memory[address] = (byte)Registers[rt];
+                        break;
+                    }
+                case 0b101001:  // sh
+                    {
+                        uint address = value + Registers[rs];
+                        Memory[address] = (byte)(Registers[rt] >> 8);
+                        Memory[address + 1] = (byte)Registers[rt];
                         break;
                     }
                 case 0b001010:  // slti

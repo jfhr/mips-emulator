@@ -9,7 +9,7 @@ namespace Mips.Assembler.ComponentTest
     public class TestSingleInstruction
     {
         private IMemory memory;
-        private IErrorMessageHelper errorMessageHelper;
+        private IMessageHelper errorMessageHelper;
         private IParameterQueue parameterQueue;
         private IBinaryCodeWriter binaryCodeWriter;
         private ILabelRegistry labelRegistry;
@@ -22,7 +22,7 @@ namespace Mips.Assembler.ComponentTest
         public void Initialize()
         {
             memory = new Memory();
-            errorMessageHelper = new ErrorMessageHelper();
+            errorMessageHelper = new MessageHelper();
             parameterQueue = new ParameterQueue();
             binaryCodeWriter = new BinaryCodeWriter(memory);
             labelRegistry = new LabelRegistry(errorMessageHelper, binaryCodeWriter);
