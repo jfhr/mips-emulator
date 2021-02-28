@@ -77,5 +77,14 @@ namespace Mips.Assembler.Properties {
                 return ResourceManager.GetString("LabelNotDefined", resourceCulture);
             }
         }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Syntax Error..
+        /// </summary>
+        internal static string SyntaxError {
+            get {
+                return ResourceManager.GetString("SyntaxError", resourceCulture);
+            }
+        }
     }
 }

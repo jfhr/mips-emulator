@@ -123,4 +123,7 @@
   <data name="LabelNotDefined" xml:space="preserve">
     <value>Label {0} was never defined.</value>
   </data>
+  <data name="SyntaxError" xml:space="preserve">
+    <value>Syntax Error.</value>
+  </data>
 </root>
