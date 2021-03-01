@@ -6,6 +6,9 @@ using System.Linq;
 
 namespace Mips.Assembler
 {
+    /// <summary>
+    /// Instance of an assembler. Create a new instance if the code changes.
+    /// </summary>
     public class AssemblerInstance : IAssemblerResult
     {
         private readonly StringEnumerator code;
@@ -19,19 +22,22 @@ namespace Mips.Assembler
 
         private static readonly string[] registerNames = new string[]
         {
-            null, null,
+            "zero", "at",
             "v0", "v1",
             "a0", "a1", "a2", "a3",
             "t0", "t1", "t2", "t3", "t4", "t5", "t6", "t7",
             "s0", "s1", "s2", "s3", "s4", "s5", "s6", "s7",
             "t8", "t9",
-            null, null, null,
-            "sp", "fp", "ra",
+            "ko", "k1",
+            "gp", "sp", "fp", "ra",
         };
 
         public IEnumerable<Message> Messages => messages;
         public IReadOnlyDictionary<string, uint> Labels => labels;
 
+        /// <summary>
+        /// Creates a new code instance.
+        /// </summary>
         public AssemblerInstance(string code, IMemory memory)
         {
             this.code = new StringEnumerator(code);
@@ -39,6 +45,9 @@ namespace Mips.Assembler
             this.memory = memory;
         }
 
+        /// <summary>
+        /// Run the assembler.
+        /// </summary>
         public void Assemble()
         {
             Pass();
@@ -50,6 +59,9 @@ namespace Mips.Assembler
             writeEnable = true;
             secondPass = true;
             memoryAddress = 0;
+            code.Reset();
+            code.MoveNext();
+
             Pass();
             WriteWord(Cpu.TerminateInstruction);
             if (AnyErrors())
@@ -58,6 +70,9 @@ namespace Mips.Assembler
             }
         }
 
+        /// <summary>
+        /// Run one assembler pass.
+        /// </summary>
         public void Pass()
         {
             SkipWhitespaceAndComments();
@@ -73,6 +88,9 @@ namespace Mips.Assembler
             }
         }
 
+        /// <summary>
+        /// Try to read and process an assembler instruction.
+        /// </summary>
         public bool TryReadInstruction()
         {
             var startIndex = code.Index;
@@ -88,12 +106,15 @@ namespace Mips.Assembler
                         MipsAsm.InstructionSyntaxType.ArithLogI => TryReadArithLogI(info.FunctionOrOpcode),
                         MipsAsm.InstructionSyntaxType.Branch => TryReadBranch(info.FunctionOrOpcode),
                         MipsAsm.InstructionSyntaxType.BranchZ => TryReadBranchZ(info.FunctionOrOpcode),
-                        MipsAsm.InstructionSyntaxType.BranchAlways => TryReadBranchAlways(info.FunctionOrOpcode),
+                        MipsAsm.InstructionSyntaxType.BranchAlways => TryReadBranchAlways(),
                         MipsAsm.InstructionSyntaxType.DivMult => TryReadDivMult(info.FunctionOrOpcode),
                         MipsAsm.InstructionSyntaxType.Jump => TryReadJump(info.FunctionOrOpcode),
                         MipsAsm.InstructionSyntaxType.LoadI => TryReadLoadI(info.FunctionOrOpcode),
                         MipsAsm.InstructionSyntaxType.LoadStore => TryReadLoadStore(info.FunctionOrOpcode),
-                        MipsAsm.InstructionSyntaxType.RJumpOrMove => TryReadJumpROrMoveTo(info.FunctionOrOpcode),
+                        MipsAsm.InstructionSyntaxType.LI => TryReadLI(),
+                        MipsAsm.InstructionSyntaxType.LA => TryReadLA(),
+                        MipsAsm.InstructionSyntaxType.RJumpOrMove => TryReadJumpRMoveTo(info.FunctionOrOpcode),
+                        MipsAsm.InstructionSyntaxType.Move => TryReadMove(),
                         MipsAsm.InstructionSyntaxType.Shift => TryReadShift(info.FunctionOrOpcode),
                         MipsAsm.InstructionSyntaxType.ShiftV => TryReadShiftV(info.FunctionOrOpcode),
                         _ => throw new NotImplementedException(),
@@ -114,6 +135,9 @@ namespace Mips.Assembler
             return false;
         }
 
+        /// <summary>
+        /// Try to read and process a special instruction.
+        /// </summary>
         public bool TryReadSpecial()
         {
             var startIndex = code.Index;
@@ -128,7 +152,7 @@ namespace Mips.Assembler
                     // TODO maybe enforce .data and .text ?
                     ".data" => true,
                     ".text" => true,
-                    ".globl" => TryReadAndLookupLabel(out uint _),
+                    ".globl" => TryReadAndLookupLabel(out uint _, out string _),
                     _ => false,
                 };
                 if (success)
@@ -144,6 +168,9 @@ namespace Mips.Assembler
             return false;
         }
 
+        /// <summary>
+        /// Try to read a string and write it to memory.
+        /// </summary>
         private bool TryReadStringAndWrite()
         {
             if (TryReadAsciiString(out byte[] value))
@@ -154,6 +181,9 @@ namespace Mips.Assembler
             return false;
         }
 
+        /// <summary>
+        /// Try to read a string and write it to memory zero-terminated.
+        /// </summary>
         private bool TryReadStringAndWriteWithZero()
         {
             if (TryReadAsciiString(out byte[] value))
@@ -165,6 +195,9 @@ namespace Mips.Assembler
             return false;
         }
 
+        /// <summary>
+        /// Format R arithmetic-logical: add, addu, and, nor, or, sub, subu, xor, slt, sltu
+        /// </summary>
         public bool TryReadArithLog(uint function)
         {
             var startIndex = code.Index;
@@ -182,6 +215,9 @@ namespace Mips.Assembler
             return false;
         }
 
+        /// <summary>
+        /// Format R div/mult: div, divu, mult, multu
+        /// </summary>
         public bool TryReadDivMult(uint function)
         {
             var startIndex = code.Index;
@@ -197,6 +233,9 @@ namespace Mips.Assembler
             return false;
         }
 
+        /// <summary>
+        /// Format R shift: sll, sra, srl
+        /// </summary>
         public bool TryReadShift(uint function)
         {
             var startIndex = code.Index;
@@ -204,9 +243,9 @@ namespace Mips.Assembler
                 && TryReadComma()
                 && TryReadRegister(out int rt)
                 && TryReadComma()
-                && TryReadSigned(out int shamt))
+                && TryReadUnsigned(5, out uint shamt))
             {
-                uint ins = OperationEncoder.EncodeFormatR(0, rt, rd, shamt, function);
+                uint ins = OperationEncoder.EncodeFormatR(0, rt, rd, (int)shamt, function);
                 WriteWord(ins);
                 return true;
             }
@@ -214,6 +253,10 @@ namespace Mips.Assembler
             return false;
         }
 
+
+        /// <summary>
+        /// Format R shift value: sllv, srav, srlv
+        /// </summary>
         public bool TryReadShiftV(uint function)
         {
             var startIndex = code.Index;
@@ -231,7 +274,10 @@ namespace Mips.Assembler
             return false;
         }
 
-        public bool TryReadJumpROrMoveTo(uint function)
+        /// <summary>
+        /// Format R jump-register/move: jalr, jr, mfhi, mflo
+        /// </summary>
+        public bool TryReadJumpRMoveTo(uint function)
         {
             var startIndex = code.Index;
             if (TryReadRegister(out int rs))
@@ -244,6 +290,28 @@ namespace Mips.Assembler
             return false;
         }
 
+        /// <summary>
+        /// Format R register move: move
+        /// </summary>
+        public bool TryReadMove()
+        {
+            var startIndex = code.Index;
+            if (TryReadRegister(out int rd)
+                && TryReadComma()
+                && TryReadRegister(out int rs))
+            {
+                // move $d,$s is implemented as add $d,$0,$s
+                uint ins = OperationEncoder.EncodeFormatR(rs, 0, rd, 0, 0b100000);
+                WriteWord(ins);
+                return true;
+            }
+            code.Index = startIndex;
+            return false;
+        }
+
+        /// <summary>
+        /// Format I arithmetic-logical: addi, addiu, andi, ori, xori, slti, sltiu
+        /// </summary>
         public bool TryReadArithLogI(uint opcode)
         {
             var startIndex = code.Index;
@@ -251,9 +319,9 @@ namespace Mips.Assembler
                 && TryReadComma()
                 && TryReadRegister(out int rs)
                 && TryReadComma()
-                && TryReadUnsigned(out uint immed))
+                && TryReadSigned(16, out int immed))
             {
-                uint ins = OperationEncoder.EncodeFormatI(opcode, rs, rt, immed);
+                uint ins = OperationEncoder.EncodeFormatI(opcode, rs, rt, unchecked((uint)immed));
                 WriteWord(ins);
                 return true;
             }
@@ -261,14 +329,17 @@ namespace Mips.Assembler
             return false;
         }
 
+        /// <summary>
+        /// Format I load: lui
+        /// </summary>
         public bool TryReadLoadI(uint opcode)
         {
             var startIndex = code.Index;
             if (TryReadRegister(out int rt)
                 && TryReadComma()
-                && TryReadUnsigned(out uint immed))
+                && TryReadSigned(16, out int immed))
             {
-                uint ins = OperationEncoder.EncodeFormatI(opcode, 0, rt, immed);
+                uint ins = OperationEncoder.EncodeFormatI(opcode, 0, rt, unchecked((uint)immed));
                 WriteWord(ins);
                 return true;
             }
@@ -276,6 +347,9 @@ namespace Mips.Assembler
             return false;
         }
 
+        /// <summary>
+        /// Format I branch: beq, bne
+        /// </summary>
         public bool TryReadBranch(uint opcode)
         {
             var startIndex = code.Index;
@@ -283,9 +357,10 @@ namespace Mips.Assembler
                 && TryReadComma()
                 && TryReadRegister(out int rt)
                 && TryReadComma()
-                && TryReadAndLookupLabel(out uint address))
+                && TryReadAndLookupLabel(out uint targetAddress, out string labelName))
             {
-                uint ins = OperationEncoder.EncodeFormatI(opcode, rs, rt, address);
+                uint offset = CalculateBranchOffset(targetAddress, startIndex, labelName);
+                uint ins = OperationEncoder.EncodeFormatI(opcode, rs, rt, offset);
                 WriteWord(ins);
                 return true;
             }
@@ -293,14 +368,18 @@ namespace Mips.Assembler
             return false;
         }
 
+        /// <summary>
+        /// Format I branch zero: bgtz, blez, beqz
+        /// </summary>
         public bool TryReadBranchZ(uint opcode)
         {
             var startIndex = code.Index;
             if (TryReadRegister(out int rs)
                 && TryReadComma()
-                && TryReadAndLookupLabel(out uint address))
+                && TryReadAndLookupLabel(out uint targetAddress, out string labelName))
             {
-                uint ins = OperationEncoder.EncodeFormatI(opcode, rs, 0, address);
+                uint offset = CalculateBranchOffset(targetAddress, startIndex, labelName);
+                uint ins = OperationEncoder.EncodeFormatI(opcode, rs, 0, offset);
                 WriteWord(ins);
                 return true;
             }
@@ -308,12 +387,17 @@ namespace Mips.Assembler
             return false;
         }
 
-        public bool TryReadBranchAlways(uint opcode)
+        /// <summary>
+        /// Format I branch always: b
+        /// </summary>
+        public bool TryReadBranchAlways()
         {
             var startIndex = code.Index;
-            if (TryReadAndLookupLabel(out uint address))
+            if (TryReadAndLookupLabel(out uint targetAddress, out string labelName))
             {
-                uint ins = OperationEncoder.EncodeFormatI(opcode, 0, 0, address);
+                // b is implemented as beq $0,$0
+                uint offset = CalculateBranchOffset(targetAddress, startIndex, labelName);
+                uint ins = OperationEncoder.EncodeFormatI(0b000100, 0, 0, offset);
                 WriteWord(ins);
                 return true;
             }
@@ -321,6 +405,9 @@ namespace Mips.Assembler
             return false;
         }
 
+        /// <summary>
+        /// Format I load/store: lb, lbu, lh, lhu, lw, sb, sh, sw, lui
+        /// </summary>
         public bool TryReadLoadStore(uint opcode)
         {
             var startIndex = code.Index;
@@ -336,11 +423,48 @@ namespace Mips.Assembler
             return false;
         }
 
+        /// <summary>
+        /// Format I load address: la
+        /// </summary>
+        public bool TryReadLA()
+        {
+            var startIndex = code.Index;
+            if (TryReadRegister(out int reg)
+                && TryReadComma()
+                && TryReadAndLookupLabel(out uint labelAddress, out string _))
+            {
+                WriteLoad32Instructions(reg, labelAddress);
+                return true;
+            }
+            code.Index = startIndex;
+            return false;
+        }
+
+        /// <summary>
+        /// Format I load 32: li
+        /// </summary>
+        public bool TryReadLI()
+        {
+            var startIndex = code.Index;
+            if (TryReadRegister(out int reg)
+                && TryReadComma()
+                && TryReadSigned(32, out int value))
+            {
+                WriteLoad32Instructions(reg, unchecked((uint)value));
+                return true;
+            }
+            code.Index = startIndex;
+            return false;
+        }
+
+        /// <summary>
+        /// Format J: j, jal
+        /// </summary>
         public bool TryReadJump(uint opcode)
         {
             var startIndex = code.Index;
             bool link = opcode == 0b000011;
-            if (TryReadAndLookupLabel(out uint address))
+            if (TryReadAndLookupLabel(out uint address, out string _))
             {
                 uint ins = OperationEncoder.EncodeFormatJ(address, link);
                 WriteWord(ins);
@@ -350,6 +474,10 @@ namespace Mips.Assembler
             return false;
         }
 
+        /// <summary>
+        /// Try to read an ASCII string delimited by double quotation marks. 
+        /// The usual escape sequences are allowed.
+        /// </summary>
         public bool TryReadAsciiString(out byte[] value)
         {
             var bytes = new List<byte>();
@@ -403,12 +531,15 @@ namespace Mips.Assembler
             return false;
         }
 
-        public bool TryReadAndLookupLabel(out uint labelAddress)
+        /// <summary>
+        /// Try to read a register reference and lookup its value.
+        /// </summary>
+        public bool TryReadAndLookupLabel(out uint labelAddress, out string labelName)
         {
             var startIndex = code.Index;
-            if (TryReadName(out string name))
+            if (TryReadName(out labelName))
             {
-                if (labels.TryGetValue(name, out labelAddress))
+                if (labels.TryGetValue(labelName, out labelAddress))
                 {
                     return true;
                 }
@@ -419,13 +550,16 @@ namespace Mips.Assembler
                 }
                 else
                 {
-                    AddError(startIndex, code.Index, Resources.LabelNotDefined, name);
+                    AddError(startIndex, code.Index, Resources.LabelNotDefined, labelName);
                 }
             }
             labelAddress = 0u;
             return false;
         }
 
+        /// <summary>
+        /// Try to read a label definition and register it.
+        /// </summary>
         public bool TryReadLabelDefinition()
         {
             var startIndex = code.Index;
@@ -434,7 +568,10 @@ namespace Mips.Assembler
                 if (code.Current == ':')
                 {
                     code.MoveNext();
-                    DefineLabel(startIndex, code.Index, name);
+                    if (!secondPass)
+                    {
+                        DefineLabel(startIndex, code.Index, name);
+                    }
                     return true;
                 }
             }
@@ -442,10 +579,21 @@ namespace Mips.Assembler
             return false;
         }
 
+        /// <summary>
+        /// Try to read an immediate value with register offset (e.g. 100($t0) ).
+        /// </summary>
         public bool TryReadValueWithOffset(out uint value, out int offsetRegister)
         {
-            if (TryReadUnsigned(out value)
-                && code.Current == '(' && code.MoveNext()
+            if (TryReadSigned(16, out int signedValue))
+            {
+                value = unchecked((uint)signedValue);
+            }
+            else
+            {
+                value = 0;
+            }
+
+            if (code.Current == '(' && code.MoveNext()
                 && TryReadRegister(out offsetRegister)
                 && code.Current == ')')
             {
@@ -456,7 +604,10 @@ namespace Mips.Assembler
             return false;
         }
 
-        public bool TryReadUnsigned(out uint value)
+        /// <summary>
+        /// Try to read a unsigned value that fits into <paramref name="bits"/> bits.
+        /// </summary>
+        public bool TryReadUnsigned(int bits, out uint value)
         {
             var startIndex = code.Index;
 
@@ -464,7 +615,11 @@ namespace Mips.Assembler
             string number = code[startIndex..code.Index];
             if (uint.TryParse(number, out value))
             {
-                return true;
+                if (FitsUnsigned(bits, value))
+                {
+                    return true;
+                }
+                AddError(startIndex, code.Index, Resources.UnsignedOverflow, number, bits);
             }
 
             code.Index = startIndex;
@@ -472,7 +627,10 @@ namespace Mips.Assembler
             return false;
         }
 
-        public bool TryReadSigned(out int value)
+        /// <summary>
+        /// Try to read a signed value that fits into <paramref name="bits"/> bits.
+        /// </summary>
+        public bool TryReadSigned(int bits, out int value)
         {
             var startIndex = code.Index;
             if ((IsDigit() || code.Current == '-') && code.MoveNext())
@@ -481,7 +639,11 @@ namespace Mips.Assembler
                 string number = code[startIndex..code.Index];
                 if (int.TryParse(number, out value))
                 {
-                    return true;
+                    if (FitsSigned(bits, value))
+                    {
+                        return true;
+                    }
+                    AddError(startIndex, code.Index, Resources.SignedOverflow, number, bits);
                 }
             }
             code.Index = startIndex;
@@ -489,6 +651,9 @@ namespace Mips.Assembler
             return false;
         }
 
+        /// <summary>
+        /// Try to read a register reference. Returns the register index.
+        /// </summary>
         public bool TryReadRegister(out int register)
         {
             var startIndex = code.Index;
@@ -535,6 +700,9 @@ namespace Mips.Assembler
             return false;
         }
 
+        /// <summary>
+        /// Try to read a special name (starts with a dot).
+        /// </summary>
         public bool TryReadSpecialName(out string name)
         {
             var startIndex = code.Index;
@@ -548,6 +716,9 @@ namespace Mips.Assembler
             return false;
         }
 
+        /// <summary>
+        /// Try to read a (instruction or label) name.
+        /// </summary>
         public bool TryReadName(out string name)
         {
             var startIndex = code.Index;
@@ -561,6 +732,9 @@ namespace Mips.Assembler
             return false;
         }
 
+        /// <summary>
+        /// Try to read a comma, optionally surrounded by whitespace.
+        /// </summary>
         public bool TryReadComma()
         {
             var startIndex = code.Index;
@@ -574,11 +748,17 @@ namespace Mips.Assembler
             return false;
         }
 
+        /// <summary>
+        /// Skip whitespace and comments, if there are any.
+        /// </summary>
         public void SkipWhitespaceAndComments()
         {
             while (TryReadWhitespace() || TryReadComment()) ;
         }
 
+        /// <summary>
+        /// Try to read a single line comment.
+        /// </summary>
         public bool TryReadComment()
         {
             if (code.Current == '#')
@@ -590,6 +770,9 @@ namespace Mips.Assembler
             return false;
         }
 
+        /// <summary>
+        /// Try to read whitespace characters (including tab and newline).
+        /// </summary>
         public bool TryReadWhitespace()
         {
             var result = false;
@@ -600,11 +783,82 @@ namespace Mips.Assembler
             return result;
         }
 
+        /// <summary>
+        /// Write two instructions to load a 32 bit immediate value into a register (lui, ori).
+        /// </summary>
+        private void WriteLoad32Instructions(int reg, uint value)
+        {
+            uint upper = (value & 0xFFFF_0000) >> 16;
+            uint lower = value & 0x0000_FFFF;
+            uint lui = OperationEncoder.EncodeFormatI(0b001111, 0, reg, upper);
+            uint ori = OperationEncoder.EncodeFormatI(0b001101, reg, reg, lower);
+            WriteWord(lui);
+            WriteWord(ori);
+        }
+
+        /// <summary>
+        /// Calculates if <paramref name="number"/> fits into <paramref name="bits"/> bits.
+        /// </summary>
+        private bool FitsUnsigned(int bits, uint number)
+        {
+            if (bits < 0 || bits > 32)
+            {
+                throw new ArgumentException(nameof(bits));
+            }
+            if (bits == 32)
+            {
+                return true;
+            }
+            uint max = 1u << bits;
+            return number < max;
+        }
+
+        /// <summary>
+        /// Calculates if <paramref name="number"/> fits into <paramref name="bits"/> bits.
+        /// </summary>
+        private bool FitsSigned(int bits, int number)
+        {
+            if (bits < 0 || bits > 32)
+            {
+                throw new ArgumentException(nameof(bits));
+            }
+            if (bits == 32)
+            {
+                return true;
+            }
+            int max = 1 << (bits - 1);
+            int min = -max - 1;
+            return min < number && number < max;
+        }
+
+        /// <summary>
+        /// Calculate the offset from the current memory address to <paramref name="targetAddress"/> 
+        /// for branch instructions.
+        /// </summary>
+        private uint CalculateBranchOffset(uint targetAddress, int startIndex, string labelName)
+        {
+            // subtract 4 bc the pc is incremented before the instruction is executed
+            int offset = (int)(targetAddress - memoryAddress) - 4;
+            if (offset < short.MinValue || offset > short.MaxValue)
+            {
+                AddError(startIndex, code.Index, Resources.BranchTooFarAwayFromLabel, labelName);
+            }
+
+            // return value as unsigned 16-bit
+            uint unsigned = unchecked((uint)offset);
+            // last 2 bits are always unset, so we leave those out
+            unsigned >>= 2;
+            unsigned &= 0x0000_FFFF;
+            return unsigned;
+        }
+
+        /// <summary>
+        /// Write a word into memory at the current address (4-bit aligned).
+        /// </summary>
         public void WriteWord(uint word)
         {
             // get next greater or equal multiple of 4
-            memoryAddress += 3;
-            memoryAddress %= 4;
+            memoryAddress -= (memoryAddress % 4);
 
             if (writeEnable)
             {
@@ -614,6 +868,9 @@ namespace Mips.Assembler
             memoryAddress += 4;
         }
 
+        /// <summary>
+        /// Write a byte into memory at the current address.
+        /// </summary>
         public void WriteByte(byte value)
         {
             if (writeEnable)
@@ -624,6 +881,10 @@ namespace Mips.Assembler
             memoryAddress++;
         }
 
+
+        /// <summary>
+        /// Write a byte sequence into memory at the current address.
+        /// </summary>
         public void WriteBytes(byte[] values)
         {
             foreach (var b in values)
@@ -632,6 +893,9 @@ namespace Mips.Assembler
             }
         }
 
+        /// <summary>
+        /// Add a label definition for the current memory address.
+        /// </summary>
         public void DefineLabel(int startIndex, int endIndex, string name)
         {
             if (labels.ContainsKey(name))
@@ -644,6 +908,9 @@ namespace Mips.Assembler
             }
         }
 
+        /// <summary>
+        /// Add an error message.
+        /// </summary>
         public void AddError(int startIndex, int endIndex, string message, params object[] args)
         {
             if (args.Length != 0)
@@ -664,6 +931,9 @@ namespace Mips.Assembler
             });
         }
 
+        /// <summary>
+        /// Add an info (syntax help) message.
+        /// </summary>
         public void AddInfo(int startIndex, int endIndex, string message, params object[] args)
         {
             if (args.Length != 0)
@@ -680,26 +950,41 @@ namespace Mips.Assembler
             });
         }
 
+        /// <summary>
+        /// Indicates if any error messages have been recorded.
+        /// </summary>
         public bool AnyErrors()
         {
             return messages.Any(x => x.IsError);
         }
 
+        /// <summary>
+        /// Indicates if the current character is an ASCII digit.
+        /// </summary>
         public bool IsDigit()
         {
             return '0' <= code.Current && code.Current <= '9';
         }
 
+        /// <summary>
+        /// Indicates if the current character can be the first character of a name (letters and underscore).
+        /// </summary>
         public bool IsNameFirstChar()
         {
             return char.IsLetter(code.Current) || code.Current == '_';
         }
 
+        /// <summary>
+        /// Indicates if the current character can be the second character of a name (letters, numbers and underscore).
+        /// </summary>
         public bool IsNameSecondChar()
         {
             return char.IsLetterOrDigit(code.Current) || code.Current == '_';
         }
 
+        /// <summary>
+        /// Indicates if the current character is ASCII.
+        /// </summary>
         public bool IsAscii()
         {
             return code.Current < 128;

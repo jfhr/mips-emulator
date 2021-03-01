@@ -61,6 +61,15 @@ namespace Mips.Assembler.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to The Branch instruction is too far away from the label {0} (offset is larger than 16 bits)..
+        /// </summary>
+        internal static string BranchTooFarAwayFromLabel {
+            get {
+                return ResourceManager.GetString("BranchTooFarAwayFromLabel", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Label {0} was defined more than once..
         /// </summary>
         internal static string LabelDefinedTwice {
@@ -79,11 +88,29 @@ namespace Mips.Assembler.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to The signed value {0} doesn&apos;t fit inside {1} bits..
+        /// </summary>
+        internal static string SignedOverflow {
+            get {
+                return ResourceManager.GetString("SignedOverflow", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Syntax Error..
         /// </summary>
         internal static string SyntaxError {
             get {
                 return ResourceManager.GetString("SyntaxError", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The unsigned value {0} doesn&apos;t fit inside {1} bits..
+        /// </summary>
+        internal static string UnsignedOverflow {
+            get {
+                return ResourceManager.GetString("UnsignedOverflow", resourceCulture);
             }
         }
     }

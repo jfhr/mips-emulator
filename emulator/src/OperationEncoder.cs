@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-
-namespace Mips.Emulator
+﻿namespace Mips.Emulator
 {
     /// <summary>
     /// Encodes an instruction from its components into a 32-Bit word.

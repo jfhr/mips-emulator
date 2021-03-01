@@ -136,7 +136,7 @@ namespace Mips.Assembler.UnitTest
         {
             var target = new AssemblerInstance(code, memoryMock.Object);
 
-            bool result = target.TryReadSigned(out int actual);
+            bool result = target.TryReadSigned(32, out int actual);
             if (expected == null)
             {
                 Assert.IsFalse(result);
@@ -170,7 +170,7 @@ namespace Mips.Assembler.UnitTest
         {
             var target = new AssemblerInstance(code, memoryMock.Object);
 
-            bool result = target.TryReadUnsigned(out uint actual);
+            bool result = target.TryReadUnsigned(32, out uint actual);
             if (expected == null)
             {
                 Assert.IsFalse(result);
@@ -187,6 +187,7 @@ namespace Mips.Assembler.UnitTest
             new object[] {"", null, null},
             new object[] {" ", null, null},
 
+            new object[] {"($0)", 0u, 0},
             new object[] {"0($0)", 0u, 0},
             new object[] {"1($1)", 1u, 1},
             new object[] {"101($v0)", 101u, 2},
