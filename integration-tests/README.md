@@ -1,4 +1,4 @@
-﻿# Component tests
+﻿# Integration tests
 
 These tests contain assembly programs that have been verified to fulfill their specifications when run with MUnit.
 It is then verified that they show the same behavior in our emulator.

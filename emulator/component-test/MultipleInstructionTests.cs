@@ -6,6 +6,9 @@ using System.Text;
 
 namespace Mips.Emulator.ComponentTest
 {
+    /// <summary>
+    /// The source code for the tested in programs is in the integration-tests project.
+    /// </summary>
     [TestClass]
     public class MultipleInstructionTests
     {

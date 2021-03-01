@@ -24,6 +24,7 @@ namespace Mips.Assembler
         }
 
         public int Index { get; set; } = -1;
+        public int Length => text.Length;
 
         public StringEnumerator(string text)
         {
