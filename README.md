@@ -1,3 +1,5 @@
+[![.NET](https://github.com/jfhr/mips-emulator/actions/workflows/dotnet.yml/badge.svg)](https://github.com/jfhr/mips-emulator/actions/workflows/dotnet.yml)
+
 # mips-emulator
 
 The goal of this project is to create a complete emulator of the MIPS runtime and assembler that runs in the browser. 
