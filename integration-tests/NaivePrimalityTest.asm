@@ -9,7 +9,7 @@ srl $t0,$a0,1             # $t0 = $a0 / 2
 beqz $t0,not_prime        # 0, 1 are not prime
 li $t1,2
 beq $a0,$t1,prime         # 2 is prime
-andi $t2,$a0,0x00000001   # Otherwise, if the last bit of $a0 is 0,
+andi $t2,$a0,1            # Otherwise, if the last bit of $a0 is 0,
 beqz $t2,not_prime        # then $a0 is even and not prime.
 li $t2,3
 beq $a0,$t2,prime         # 3 is prime

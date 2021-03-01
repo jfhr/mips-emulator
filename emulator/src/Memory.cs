@@ -11,7 +11,7 @@ namespace Mips.Emulator
     /// on demand.
     /// All operations with words use big-endian byte order.
     /// </remarks>
-    public class Memory
+    public class Memory : IMemory
     {
         /// <summary>
         /// Size of a memory page in bytes (1 MiB).
@@ -49,6 +49,20 @@ namespace Mips.Emulator
         public Memory()
         {
             pages = new byte[nPages][];
+        }
+
+        /// <summary>
+        /// Resets the entire memory to zero.
+        /// </summary>
+        public void Reset()
+        {
+            for (int i = 0; i < nPages; i++)
+            {
+                if (pages[i] != null)
+                {
+                    Array.Clear(pages[i], 0, pageSize);
+                }
+            }
         }
 
         /// <summary>

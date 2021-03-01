@@ -85,7 +85,19 @@ namespace Mips.Emulator.UnitTest
             Assert.AreEqual(0xBE, target[25002]);
             Assert.AreEqual(0xEF, target[25003]);
             Assert.AreEqual(0, target[25004]);
+        }
 
+        [TestMethod]
+        public void Reset()
+        {
+            var target = new Memory();
+            target.StoreWord(0xF00BA, 123u);
+            target[0xDEADBEEF] = 189;
+
+            target.Reset();
+
+            Assert.AreEqual(0, target[0xDEADBEEF]);
+            Assert.AreEqual(0u, target.LoadWord(0xF00BA));
         }
     }
 }
