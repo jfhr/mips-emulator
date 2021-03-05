@@ -100,16 +100,16 @@ namespace Mips.Emulator
         {
             switch (function)
             {
-                case 0b100000:  // add
+                case Functions.Add:
                     Registers[rd] = (uint)checked((int)Registers[rs] + (int)Registers[rt]);
                     break;
-                case 0b100001:  // addu
+                case Functions.Addu:
                     Registers[rd] = Registers[rs] + Registers[rt];
                     break;
-                case 0b100100:  // and                
+                case Functions.And:
                     Registers[rd] = Registers[rs] & Registers[rt];
                     break;
-                case 0b011010:  // div
+                case Functions.Div:
                     {
                         int numerator = (int)Registers[rs];
                         int denominator = (int)Registers[rt];
@@ -119,22 +119,22 @@ namespace Mips.Emulator
                         Registers.Hi = (uint)remainder;
                         break;
                     }
-                case 0b011011:  // divu
+                case Functions.Divu:
                     {
                         Registers.Lo = Registers[rs] / Registers[rt];
                         Registers.Hi = Registers[rs] % Registers[rt];
                         break;
                     }
-                case 0b001000:  // jr
+                case Functions.Jr:
                     Pc = Registers[rs];
                     break;
-                case 0b010000:  // mfhi
+                case Functions.Mfhi:
                     Registers[rd] = Registers.Hi;
                     break;
-                case 0b010010:  // mflo
+                case Functions.Mflo:
                     Registers[rd] = Registers.Lo;
                     break;
-                case 0b011000:  // mult
+                case Functions.Mult:
                     {
                         // First convert to Int32, then to Int64
                         // If we convert directly UInt32 -> Int64, we get the unsigned value.
@@ -145,50 +145,50 @@ namespace Mips.Emulator
                         Registers.Hi = (uint)(result >> 32);
                         break;
                     }
-                case 0b011001:  // multu
+                case Functions.Multu:
                     {
                         ulong result = Registers[rs] * (ulong)Registers[rt];
                         Registers.Lo = (uint)result;
                         Registers.Hi = (uint)(result >> 32);
                         break;
                     }
-                case 0b100101:  // or
+                case Functions.Or:
                     Registers[rd] = Registers[rs] | Registers[rt];
                     break;
-                case 0b000000:  // sll
+                case Functions.Sll:
                     Registers[rd] = Registers[rt] << shamt;
                     break;
-                case 0b000100:  // sllv
+                case Functions.Sllv:
                     Registers[rd] = Registers[rt] << (int)Registers[rs];
                     break;
-                case 0b101010:  //slt
+                case Functions.Slt:
                     Registers[rd] = ((int)Registers[rs] < (int)Registers[rt]) ? 1U : 0U;
                     break;
-                case 0b101011:  //sltu
+                case Functions.Sltu:
                     Registers[rd] = (Registers[rs] < Registers[rt]) ? 1U : 0U;
                     break;
-                case 0b000011:  // sra
+                case Functions.Sra:
                     Registers[rd] = (uint)((int)Registers[rt] >> shamt);
                     break;
-                case 0b000010:  // srl
+                case Functions.Srl:
                     Registers[rd] = Registers[rt] >> shamt;
                     break;
-                case 0b000110:  // srlv
+                case Functions.Srlv:
                     Registers[rd] = Registers[rt] >> (int)Registers[rs];
                     break;
-                case 0b100010:  // sub
+                case Functions.Sub:
                     {
                         int minuend = (int)Registers[rs];
                         int subtrahend = (int)Registers[rt];
                         Registers[rd] = (uint)checked(minuend - subtrahend);
                         break;
                     }
-                case 0b100011:  // subu
+                case Functions.Subu:
                     Registers[rd] = Registers[rs] - Registers[rt];
                     break;
                 case 0b001100:  // TODO syscall
                     throw new NotImplementedException();
-                case 0b100110:  // xor
+                case Functions.Xor:
                     Registers[rd] = Registers[rs] ^ Registers[rt];
                     break;
                 default:
@@ -216,22 +216,22 @@ namespace Mips.Emulator
         {
             switch (opcode)
             {
-                case 0b001000:  // addi
+                case Opcodes.Addi:
                     Registers[rt] = (uint)checked((int)Registers[rs] + (int)value);
                     break;
-                case 0b001001:  // addiu
+                case Opcodes.Addiu:
                     Registers[rt] = Registers[rs] + value;
                     break;
-                case 0b001100:  // andi
+                case Opcodes.Andi:
                     Registers[rt] = Registers[rs] & value;
                     break;
-                case 0b000100:  // beq
+                case Opcodes.Beq:
                     if (Registers[rt] == Registers[rs])
                     {
                         BranchTo(value);
                     }
                     break;
-                case 0b000001:  // multiple branch instructions
+                case 0b000001:  // multiple branch instructions TODO add these to assembler
                     switch (rt)
                     {
                         case 0b00001:  // bgez
@@ -262,49 +262,49 @@ namespace Mips.Emulator
                             break;
                     }
                     break;
-                case 0b000111:  // bgtz
+                case Opcodes.Bgtz:
                     if ((int)Registers[rs] > 0)
                     {
                         BranchTo(value);
                     }
                     break;
-                case 0b000110:  // blez
+                case Opcodes.Blez:
                     if ((int)Registers[rs] <= 0)
                     {
                         BranchTo(value);
                     }
                     break;
-                case 0b000101:  // bne
+                case Opcodes.Bne:
                     if (Registers[rs] != Registers[rt])
                     {
                         BranchTo(value);
                     }
                     break;
-                case 0b100000:  // lb
+                case Opcodes.Lb:
                     {
                         uint address = value + Registers[rs];
                         Registers[rt] = Memory[address];
                         break;
                     }
-                case 0b001111:  // lui
+                case Opcodes.Lui:
                     Registers[rt] = (value << 16);
                     break;
-                case 0b100011:  // lw
+                case Opcodes.Lw:
                     {
                         uint address = value + Registers[rs];
                         Registers[rt] = Memory.LoadWord(address);
                         break;
                     }
-                case 0b001101:  // ori
+                case Opcodes.Ori:
                     Registers[rt] = Registers[rs] | value;
                     break;
-                case 0b101000:  // sb
+                case Opcodes.Sb:
                     {
                         uint address = value + Registers[rs];
                         Memory[address] = (byte)Registers[rt];
                         break;
                     }
-                case 0b001010:  // slti
+                case Opcodes.Slti:
                     if ((int)Registers[rs] < (int)value)
                     {
                         Registers[rt] = 1;
@@ -314,7 +314,7 @@ namespace Mips.Emulator
                         Registers[rt] = 0;
                     }
                     break;
-                case 0b001011:  // sltiu
+                case Opcodes.Sltiu:
                     if (Registers[rs] < value)
                     {
                         Registers[rt] = 1;
@@ -324,13 +324,13 @@ namespace Mips.Emulator
                         Registers[rt] = 0;
                     }
                     break;
-                case 0b101011:  // sw
+                case Opcodes.Sw:
                     {
                         uint address = value + Registers[rs];
                         Memory.StoreWord(address, Registers[rt]);
                         break;
                     }
-                case 0b001110:  // xori
+                case Opcodes.Xori:
                     Registers[rt] = Registers[rs] ^ value;
                     break;
                 default:

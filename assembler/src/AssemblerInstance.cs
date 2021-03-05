@@ -301,7 +301,7 @@ namespace Mips.Assembler
                 && TryReadRegister(out int rs))
             {
                 // move $d,$s is implemented as add $d,$0,$s
-                uint ins = OperationEncoder.EncodeFormatR(rs, 0, rd, 0, 0b100000);
+                uint ins = OperationEncoder.EncodeFormatR(rs, 0, rd, 0, Functions.Add);
                 WriteWord(ins);
                 return true;
             }
@@ -397,7 +397,7 @@ namespace Mips.Assembler
             {
                 // b is implemented as beq $0,$0
                 uint offset = CalculateBranchOffset(targetAddress, startIndex, labelName);
-                uint ins = OperationEncoder.EncodeFormatI(0b000100, 0, 0, offset);
+                uint ins = OperationEncoder.EncodeFormatI(Opcodes.Beq, 0, 0, offset);
                 WriteWord(ins);
                 return true;
             }
@@ -463,7 +463,7 @@ namespace Mips.Assembler
         public bool TryReadJump(uint opcode)
         {
             var startIndex = code.Index;
-            bool link = opcode == 0b000011;
+            bool link = opcode == Opcodes.Jal;
             if (TryReadAndLookupLabel(out uint address, out string _))
             {
                 uint ins = OperationEncoder.EncodeFormatJ(address, link);
@@ -645,6 +645,17 @@ namespace Mips.Assembler
                     }
                     AddError(startIndex, code.Index, Resources.SignedOverflow, number, bits);
                 }
+                // In case the value is too large for an int, but fits in a uint,
+                // we then cast it (unchecked) to an int
+                else if (uint.TryParse(number, out uint unsignedValue))
+                {
+                    if (FitsUnsigned(bits, unsignedValue))
+                    {
+                        value = unchecked((int)unsignedValue);
+                        return true;
+                    }
+                    AddError(startIndex, code.Index, Resources.UnsignedOverflow, number, bits);
+                }
             }
             code.Index = startIndex;
             value = 0;
@@ -790,8 +801,8 @@ namespace Mips.Assembler
         {
             uint upper = (value & 0xFFFF_0000) >> 16;
             uint lower = value & 0x0000_FFFF;
-            uint lui = OperationEncoder.EncodeFormatI(0b001111, 0, reg, upper);
-            uint ori = OperationEncoder.EncodeFormatI(0b001101, reg, reg, lower);
+            uint lui = OperationEncoder.EncodeFormatI(Opcodes.Lui, 0, reg, upper);
+            uint ori = OperationEncoder.EncodeFormatI(Opcodes.Ori, reg, reg, lower);
             WriteWord(lui);
             WriteWord(ori);
         }
@@ -799,11 +810,11 @@ namespace Mips.Assembler
         /// <summary>
         /// Calculates if <paramref name="number"/> fits into <paramref name="bits"/> bits.
         /// </summary>
-        private bool FitsUnsigned(int bits, uint number)
+        private static bool FitsUnsigned(int bits, uint number)
         {
             if (bits < 0 || bits > 32)
             {
-                throw new ArgumentException(nameof(bits));
+                throw new ArgumentException("Must be in the range [0, 32]", nameof(bits));
             }
             if (bits == 32)
             {
@@ -816,11 +827,11 @@ namespace Mips.Assembler
         /// <summary>
         /// Calculates if <paramref name="number"/> fits into <paramref name="bits"/> bits.
         /// </summary>
-        private bool FitsSigned(int bits, int number)
+        private static bool FitsSigned(int bits, int number)
         {
             if (bits < 0 || bits > 32)
             {
-                throw new ArgumentException(nameof(bits));
+                throw new ArgumentException("Must be in the range [0, 32]", nameof(bits));
             }
             if (bits == 32)
             {
