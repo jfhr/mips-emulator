@@ -88,9 +88,9 @@
         public uint T9 { get => this[25]; set => this[25] = value; }
 
         /// <summary> [26] Reserved for special events. </summary>
-        public uint K1 { get => this[26]; set => this[26] = value; }
+        public uint K0 { get => this[26]; set => this[26] = value; }
         /// <summary> [27] Reserved for special events. </summary>
-        public uint K0 { get => this[27]; set => this[27] = value; }
+        public uint K1 { get => this[27]; set => this[27] = value; }
 
         /// <summary> [28] Global pointer. </summary>
         public uint Gp { get => this[28]; set => this[28] = value; }
