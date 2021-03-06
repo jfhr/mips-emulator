@@ -394,5 +394,45 @@ namespace Mips.Assembler.UnitTest
             }
             Assert.IsFalse(anyErrors);
         }
+
+        [TestMethod]
+        public void TestBranchOffsetTooLarge()
+        {
+            string code = "l: .space 80000 b l";
+            var result = MipsAsm.Assemble(code, memoryMock.Object);
+
+            var anyErrors = result.Messages.Any(x => x.IsError);
+            Assert.IsTrue(anyErrors);
+        }
+
+        [TestMethod]
+        public void TestLabelNotDefined()
+        {
+            string code = "b l";
+            var result = MipsAsm.Assemble(code, memoryMock.Object);
+
+            var anyErrors = result.Messages.Any(x => x.IsError);
+            Assert.IsTrue(anyErrors);
+        }
+
+        [TestMethod]
+        public void TestLabelDefinedMoreThanOnce()
+        {
+            string code = "l: .space 1 l: b l";
+            var result = MipsAsm.Assemble(code, memoryMock.Object);
+
+            var anyErrors = result.Messages.Any(x => x.IsError);
+            Assert.IsTrue(anyErrors);
+        }
+
+        [TestMethod]
+        public void TestUnsignedValueTooLarge()
+        {
+            string code = "sll $t0,$t0,40";
+            var result = MipsAsm.Assemble(code, memoryMock.Object);
+
+            var anyErrors = result.Messages.Any(x => x.IsError);
+            Assert.IsTrue(anyErrors);
+        }
     }
 }
