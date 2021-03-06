@@ -1,0 +1,27 @@
+﻿@page "/code"
+
+<h1>Code</h1>
+
+<button class="btn btn-primary" @onclick="Assemble" disabled="@(!IsDirty)">Assemble</button>
+
+<textarea @bind-value="Code" @bind-value:event="oninput"></textarea>
+
+@code {
+    string Code
+    {
+        get => Runtime.Code;
+        set
+        {
+            Runtime.Code = value;
+            IsDirty = true;
+        }
+    }
+
+    bool IsDirty { get; set; }
+
+    private void Assemble()
+    {
+        Runtime.Assemble();
+        IsDirty = false;
+    }
+}

@@ -39,24 +39,25 @@ namespace Mips.Emulator
         /// </summary>
         public void CycleUntilTerminate()
         {
-            try
-            {
-                while (true) CycleOnce();
-            }
-            catch (ProgramTerminatedException) { }
+            while (CycleOnce()) ;
         }
 
         /// <summary>
         /// Runs one Cpu cycle, returns a value indicating if execution should continue.
         /// </summary>
-        public void CycleOnce()
+        public bool CycleOnce()
         {
             // Fetch
+            if (Memory.IsUntouched(Pc))
+            {
+                return false;
+            }
+
             uint instruction = Memory.LoadWord(Pc);
 
             if (instruction == TerminateInstruction)
             {
-                throw new ProgramTerminatedException();
+                return false;
             }
 
             // Increment
@@ -91,6 +92,8 @@ namespace Mips.Emulator
                 uint value = instruction & 0b0000_0000_0000_0000_1111_1111_1111_1111;
                 ExecuteFormatI(opcode, rs, rt, value);
             }
+
+            return true;
         }
 
         /// <summary>
