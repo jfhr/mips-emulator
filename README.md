@@ -1,4 +1,5 @@
 [![.NET](https://github.com/jfhr/mips-emulator/actions/workflows/dotnet.yml/badge.svg)](https://github.com/jfhr/mips-emulator/actions/workflows/dotnet.yml)
+![GitHub](https://img.shields.io/github/license/jfhr/mips-emulator)
 
 # mips-emulator
 
