@@ -2,6 +2,7 @@
 using Mips.Emulator;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 
 namespace Mips.Assembler
@@ -153,6 +154,8 @@ namespace Mips.Assembler
                     ".data" => true,
                     ".text" => true,
                     ".globl" => TryReadAndLookupLabel(out uint _, out string _),
+                    ".word" => TryReadWordAndWrite(),
+                    ".space" => TryReadIntAndWriteAsSpace(),
                     _ => false,
                 };
                 if (success)
@@ -169,9 +172,39 @@ namespace Mips.Assembler
         }
 
         /// <summary>
+        /// Try to read a word and write it to memory.
+        /// </summary>
+        public bool TryReadIntAndWriteAsSpace()
+        {
+            var startIndex = code.Index;
+            if (TryReadUnsigned(32, out uint value))
+            {
+                WriteBytes(new byte[value]);
+                return true;
+            }
+            code.Index = startIndex;
+            return false;
+        }
+
+        /// <summary>
+        /// Try to read a word and write it to memory.
+        /// </summary>
+        public bool TryReadWordAndWrite()
+        {
+            var startIndex = code.Index;
+            if (TryReadSigned(32, out int value))
+            {
+                WriteWord(unchecked((uint)value));
+                return true;
+            }
+            code.Index = startIndex;
+            return false;
+        }
+
+        /// <summary>
         /// Try to read a string and write it to memory.
         /// </summary>
-        private bool TryReadStringAndWrite()
+        public bool TryReadStringAndWrite()
         {
             if (TryReadAsciiString(out byte[] value))
             {
@@ -184,7 +217,7 @@ namespace Mips.Assembler
         /// <summary>
         /// Try to read a string and write it to memory zero-terminated.
         /// </summary>
-        private bool TryReadStringAndWriteWithZero()
+        public bool TryReadStringAndWriteWithZero()
         {
             if (TryReadAsciiString(out byte[] value))
             {
@@ -633,32 +666,59 @@ namespace Mips.Assembler
         public bool TryReadSigned(int bits, out int value)
         {
             var startIndex = code.Index;
-            if ((IsDigit() || code.Current == '-') && code.MoveNext())
+            var numberStartIndex = startIndex;
+            var style = NumberStyles.Integer;
+
+            if (code.Current == '-')
+            {
+                code.MoveNext();
+            }
+            if (TryRead0x())
+            {
+                numberStartIndex += 2;
+                style = NumberStyles.HexNumber;
+                while (IsHexDigit() && code.MoveNext()) ;
+            }
+            else
             {
                 while (IsDigit() && code.MoveNext()) ;
-                string number = code[startIndex..code.Index];
-                if (int.TryParse(number, out value))
+            }
+
+            string number = code[numberStartIndex..code.Index];
+            if (int.TryParse(number, style, null, out value))
+            {
+                if (FitsSigned(bits, value))
                 {
-                    if (FitsSigned(bits, value))
-                    {
-                        return true;
-                    }
-                    AddError(startIndex, code.Index, Resources.SignedOverflow, number, bits);
+                    return true;
                 }
-                // In case the value is too large for an int, but fits in a uint,
-                // we then cast it (unchecked) to an int
-                else if (uint.TryParse(number, out uint unsignedValue))
+                AddError(startIndex, code.Index, Resources.SignedOverflow, number, bits);
+            }
+            // In case the value is too large for an int, but fits in a uint,
+            // we then cast it (unchecked) to an int
+            else if (uint.TryParse(number, style, null, out uint unsignedValue))
+            {
+                if (FitsUnsigned(bits, unsignedValue))
                 {
-                    if (FitsUnsigned(bits, unsignedValue))
-                    {
-                        value = unchecked((int)unsignedValue);
-                        return true;
-                    }
-                    AddError(startIndex, code.Index, Resources.UnsignedOverflow, number, bits);
+                    value = unchecked((int)unsignedValue);
+                    return true;
                 }
+                AddError(startIndex, code.Index, Resources.UnsignedOverflow, number, bits);
             }
             code.Index = startIndex;
             value = 0;
+            return false;            
+        }
+
+        public bool TryRead0x()
+        {
+            var startIndex = code.Index;
+            if (code.Current == '0'
+                && code.MoveNext()
+                && (code.Current == 'x' || code.Current == 'X'))
+            {
+                return true;
+            }
+            code.Index = startIndex;
             return false;
         }
 
@@ -975,6 +1035,14 @@ namespace Mips.Assembler
         public bool IsDigit()
         {
             return '0' <= code.Current && code.Current <= '9';
+        }
+
+        /// <summary>
+        /// Indicates if the current character is an ASCII hexadecimal digit.
+        /// </summary>
+        public bool IsHexDigit()
+        {
+            return IsDigit() || ('a' <= code.Current && code.Current <= 'z') || ('A' <= code.Current && code.Current <= 'Z');
         }
 
         /// <summary>

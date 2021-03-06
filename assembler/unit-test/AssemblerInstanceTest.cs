@@ -335,7 +335,7 @@ namespace Mips.Assembler.UnitTest
             }
         }
 
-        public static IEnumerable<object[]> MultiInstructionTestData => new[]
+        public static IEnumerable<object[]> WordWriteInstructionData => new[]
         {
             new object[] {"l: la $3,l", new []
                 {
@@ -349,12 +349,15 @@ namespace Mips.Assembler.UnitTest
                     OperationEncoder.EncodeFormatI(Opcodes.Ori, 3, 3, 0x0123),
                 }
             },
+            new object[] {".word 123456789", new uint[] {0x075BCD15}},
+            new object[] {".word -123456789", new uint[] {0xF8A432EB}},
+            new object[] {".word 0xDEADBEEF", new uint[] {0xDEADBEEF}},
         };
 
         [TestMethod]
-        [DynamicData(nameof(MultiInstructionTestData))]
+        [DynamicData(nameof(WordWriteInstructionData))]
 
-        public void AssembleMultiInstruction(string code, uint[] expected)
+        public void AssembleWordInstructions(string code, uint[] expected)
         {
             var result = MipsAsm.Assemble(code, memoryMock.Object);
 
@@ -365,6 +368,30 @@ namespace Mips.Assembler.UnitTest
                 memoryMock.Verify(x => x.StoreWord(i * 4u, expected[i]));
             }
             memoryMock.Verify(x => x.StoreWord(i * 4u, Cpu.TerminateInstruction));
+            Assert.IsFalse(anyErrors);
+        }
+
+        public static IEnumerable<object[]> ByteWriteInstructionData => new[]
+        {
+            new object[] {".ascii \"abcd\"", new byte[] {0x61, 0x62, 0x63, 0x64}},
+            new object[] {".asciiz \"abcd\"", new byte[] {0x61, 0x62, 0x63, 0x64, 0x00}},
+            new object[] {".space 1", new byte[] {0x00}},
+            new object[] {".space 4", new byte[] {0x00, 0x00, 0x00, 0x00}},
+        };
+
+        [TestMethod]
+        [DynamicData(nameof(ByteWriteInstructionData))]
+
+        public void AssembleByteInstructions(string code, byte[] expected)
+        {
+            var result = MipsAsm.Assemble(code, memoryMock.Object);
+
+            var anyErrors = result.Messages.Any(x => x.IsError);
+            uint i = 0;
+            for (; i < expected.Length; i++)
+            {
+                memoryMock.VerifySet(x => x[i] = expected[i]);
+            }
             Assert.IsFalse(anyErrors);
         }
     }
