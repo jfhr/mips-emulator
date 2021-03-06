@@ -9,10 +9,10 @@
         {
             uint word = 0;
             word |= function;
-            word |= ((uint)shamt << 6);
-            word |= ((uint)rd << 11);
-            word |= ((uint)rt << 16);
-            word |= ((uint)rs << 21);
+            word |= (uint)shamt << 6;
+            word |= (uint)rd << 11;
+            word |= (uint)rt << 16;
+            word |= (uint)rs << 21;
             return word;
         }
 
@@ -31,9 +31,9 @@
         {
             uint word = 0;
             word |= value;
-            word |= ((uint)rt << 16);
-            word |= ((uint)rs << 21);
-            word |= (opcode << 26);
+            word |= (uint)rt << 16;
+            word |= (uint)rs << 21;
+            word |= opcode << 26;
             return word;
         }
     }

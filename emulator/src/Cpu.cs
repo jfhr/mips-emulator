@@ -30,8 +30,8 @@ namespace Mips.Emulator
 
         public Cpu()
         {
-            Registers = new RegisterSet();
-            Memory = new Memory();
+            Registers = new();
+            Memory = new();
         }
 
         /// <summary>

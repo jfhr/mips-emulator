@@ -102,7 +102,7 @@ namespace Mips.Emulator.UnitTest
         {
             target.Registers[4] = 123;
             target.Registers[5] = 234;
-            PushFormatR(4, 5, 6, 0, 0b10_0000);
+            PushFormatR(4, 5, 6, 0, Functions.Add);
 
             target.CycleOnce();
 
@@ -115,7 +115,7 @@ namespace Mips.Emulator.UnitTest
         {
             target.Registers[4] = int.MaxValue;
             target.Registers[5] = 234;
-            PushFormatR(4, 5, 6, 0, 0b10_0000);
+            PushFormatR(4, 5, 6, 0, Functions.Add);
 
             target.CycleOnce();
         }
@@ -124,7 +124,7 @@ namespace Mips.Emulator.UnitTest
         public void ADDI()
         {
             target.Registers[4] = 123;
-            PushFormatI(0b00_1000, 4, 6, 234);
+            PushFormatI(Opcodes.Addi, 4, 6, 234);
 
             target.CycleOnce();
 
@@ -136,7 +136,7 @@ namespace Mips.Emulator.UnitTest
         public void ADDI_Overflow()
         {
             target.Registers[4] = int.MaxValue;
-            PushFormatI(0b00_1000, 4, 6, 234);
+            PushFormatI(Opcodes.Addi, 4, 6, 234);
 
             target.CycleOnce();
         }
@@ -145,7 +145,7 @@ namespace Mips.Emulator.UnitTest
         public void ADDIU()
         {
             target.Registers[4] = 123;
-            PushFormatI(0b00_1001, 4, 6, 234);
+            PushFormatI(Opcodes.Addiu, 4, 6, 234);
 
             target.CycleOnce();
 
@@ -156,7 +156,7 @@ namespace Mips.Emulator.UnitTest
         public void ADDIU_Overflow()
         {
             target.Registers[4] = int.MaxValue;
-            PushFormatI(0b00_1001, 4, 6, 234);
+            PushFormatI(Opcodes.Addiu, 4, 6, 234);
 
             target.CycleOnce();
 
@@ -168,7 +168,7 @@ namespace Mips.Emulator.UnitTest
         {
             target.Registers[4] = 123;
             target.Registers[5] = 234;
-            PushFormatR(4, 5, 6, 0, 0b10_0001);
+            PushFormatR(4, 5, 6, 0, Functions.Addu);
 
             target.CycleOnce();
 
@@ -180,7 +180,7 @@ namespace Mips.Emulator.UnitTest
         {
             target.Registers[4] = int.MaxValue;
             target.Registers[5] = 234;
-            PushFormatR(4, 5, 6, 0, 0b10_0001);
+            PushFormatR(4, 5, 6, 0, Functions.Addu);
 
             target.CycleOnce();
 
@@ -193,7 +193,7 @@ namespace Mips.Emulator.UnitTest
             target.Registers[4] = 0b1101_0011;
             target.Registers[5] = 0b1001_1010;
             const uint expected = 0b1001_0010;
-            PushFormatR(4, 5, 6, 0, 0b10_0100);
+            PushFormatR(4, 5, 6, 0, Functions.And);
 
             target.CycleOnce();
 
@@ -206,7 +206,7 @@ namespace Mips.Emulator.UnitTest
             target.Registers[4] = 0b1101_0011;
             const uint inputVal = 0b1001_1010;
             const uint expected = 0b1001_0010;
-            PushFormatI(0b00_1100, 4, 6, inputVal);
+            PushFormatI(Opcodes.Andi, 4, 6, inputVal);
 
             target.CycleOnce();
 
@@ -219,7 +219,7 @@ namespace Mips.Emulator.UnitTest
             target.Registers[4] = 123;
             target.Registers[5] = 123;
             const uint offset = 1024;
-            PushFormatI(0b00_0100, 4, 5, offset);
+            PushFormatI(Opcodes.Beq, 4, 5, offset);
 
             target.CycleOnce();
 
@@ -232,7 +232,7 @@ namespace Mips.Emulator.UnitTest
             target.Registers[4] = 123;
             target.Registers[5] = 900;
             const uint offset = 1024;
-            PushFormatI(0b00_0100, 4, 5, offset);
+            PushFormatI(Opcodes.Beq, 4, 5, offset);
 
             target.CycleOnce();
 
@@ -461,7 +461,7 @@ namespace Mips.Emulator.UnitTest
             target.Registers[4] = 123;
             target.Registers[5] = 123;
             const uint offset = 1024;
-            PushFormatI(0b00_0101, 4, 5, offset);
+            PushFormatI(Opcodes.Bne, 4, 5, offset);
 
             target.CycleOnce();
 
@@ -474,7 +474,7 @@ namespace Mips.Emulator.UnitTest
             target.Registers[4] = 123;
             target.Registers[5] = 900;
             const uint offset = 1024;
-            PushFormatI(0b00_0101, 4, 5, offset);
+            PushFormatI(Opcodes.Bne, 4, 5, offset);
 
             target.CycleOnce();
 
@@ -487,7 +487,7 @@ namespace Mips.Emulator.UnitTest
             // 220 : 12 = 18 R 4
             target.Registers[4] = 220;
             target.Registers[5] = 12;
-            PushFormatR(4, 5, 0, 0, 0b01_1010);
+            PushFormatR(4, 5, 0, 0, Functions.Div);
 
             target.CycleOnce();
 
@@ -500,7 +500,7 @@ namespace Mips.Emulator.UnitTest
         {
             target.Registers[4] = unchecked((uint)-220);
             target.Registers[5] = 12;
-            PushFormatR(4, 5, 0, 0, 0b01_1010);
+            PushFormatR(4, 5, 0, 0, Functions.Div);
 
             target.CycleOnce();
 
@@ -513,7 +513,7 @@ namespace Mips.Emulator.UnitTest
         {
             target.Registers[4] = 220;
             target.Registers[5] = unchecked((uint)-12);
-            PushFormatR(4, 5, 0, 0, 0b01_1010);
+            PushFormatR(4, 5, 0, 0, Functions.Div);
 
             target.CycleOnce();
 
@@ -525,7 +525,7 @@ namespace Mips.Emulator.UnitTest
         {
             target.Registers[4] = unchecked((uint)-220);
             target.Registers[5] = unchecked((uint)-12);
-            PushFormatR(4, 5, 0, 0, 0b01_1010);
+            PushFormatR(4, 5, 0, 0, Functions.Div);
 
             target.CycleOnce();
 
@@ -539,7 +539,7 @@ namespace Mips.Emulator.UnitTest
             // 4,294,967,295 : 12 = 357,913,941 R 3
             target.Registers[4] = 4294967295;
             target.Registers[5] = 12;
-            PushFormatR(4, 5, 0, 0, 0b01_1011);
+            PushFormatR(4, 5, 0, 0, Functions.Divu);
 
             target.CycleOnce();
 
@@ -611,7 +611,7 @@ namespace Mips.Emulator.UnitTest
             const byte value = 0xAB;
             target.Memory[address] = value;
             target.Registers[4] = address;
-            PushFormatI(0b10_0000, 4, 6, 0);
+            PushFormatI(Opcodes.Lb, 4, 6, 0);
 
             target.CycleOnce();
 
@@ -623,7 +623,7 @@ namespace Mips.Emulator.UnitTest
         {
             const uint value = 0xabcd;
             const uint expected = value << 16;
-            PushFormatI(0b00_1111, 0, 6, value);
+            PushFormatI(Opcodes.Lui, 0, 6, value);
 
             target.CycleOnce();
 
@@ -637,7 +637,7 @@ namespace Mips.Emulator.UnitTest
             const uint value = 0xDEADBEEF;
             target.Memory.StoreWord(address, value);
             target.Registers[4] = address;
-            PushFormatI(0b10_0011, 4, 6, 0);
+            PushFormatI(Opcodes.Lw, 4, 6, 0);
 
             target.CycleOnce();
 
@@ -649,7 +649,7 @@ namespace Mips.Emulator.UnitTest
         {
             const uint value = 0xDEADBEEF;
             target.Registers.Hi = value;
-            PushFormatR(0, 0, 6, 0, 0b01_0000);
+            PushFormatR(0, 0, 6, 0, Functions.Mfhi);
 
             target.CycleOnce();
 
@@ -661,7 +661,7 @@ namespace Mips.Emulator.UnitTest
         {
             const uint value = 0xDEADBEEF;
             target.Registers.Lo = value;
-            PushFormatR(0, 0, 6, 0, 0b01_0010);
+            PushFormatR(0, 0, 6, 0, Functions.Mflo);
 
             target.CycleOnce();
 
@@ -674,7 +674,7 @@ namespace Mips.Emulator.UnitTest
             // 0x1BADC0DE * 0x0DEDF00D = 0x1818C9B_2028EB46
             target.Registers[4] = 0x1BADC0DE;
             target.Registers[5] = 0x0DEDF00D;
-            PushFormatR(4, 5, 0, 0, 0b01_1000);
+            PushFormatR(4, 5, 0, 0, Functions.Mult);
 
             target.CycleOnce();
 
@@ -687,7 +687,7 @@ namespace Mips.Emulator.UnitTest
         {
             target.Registers[4] = unchecked((uint)-0x1BADC0DE);
             target.Registers[5] = 0x0DEDF00D;
-            PushFormatR(4, 5, 0, 0, 0b01_1000);
+            PushFormatR(4, 5, 0, 0, Functions.Mult);
 
             target.CycleOnce();
 
@@ -700,7 +700,7 @@ namespace Mips.Emulator.UnitTest
         {
             target.Registers[4] = unchecked((uint)-0x1BADC0DE);
             target.Registers[5] = unchecked((uint)-0x0DEDF00D);
-            PushFormatR(4, 5, 0, 0, 0b01_1000);
+            PushFormatR(4, 5, 0, 0, Functions.Mult);
 
             target.CycleOnce();
 
@@ -714,7 +714,7 @@ namespace Mips.Emulator.UnitTest
             // 0x1BADC0DE * 0x0DEDF00D = 0x1818C9B_2028EB46
             target.Registers[4] = 0x1BADC0DE;
             target.Registers[5] = 0x0DEDF00D;
-            PushFormatR(4, 5, 0, 0, 0b01_1001);
+            PushFormatR(4, 5, 0, 0, Functions.Multu);
 
             target.CycleOnce();
 
@@ -728,7 +728,7 @@ namespace Mips.Emulator.UnitTest
             // 0xDEADBEEF * 0xFEEDC0DE = 0xDDBF320E_4F21D342
             target.Registers[4] = 0xDEADBEEF;
             target.Registers[5] = 0xFEEDC0DE;
-            PushFormatR(4, 5, 0, 0, 0b01_1001);
+            PushFormatR(4, 5, 0, 0, Functions.Multu);
 
             target.CycleOnce();
 
@@ -742,7 +742,7 @@ namespace Mips.Emulator.UnitTest
             target.Registers[4] = 0b1101_0011;
             target.Registers[5] = 0b1001_1010;
             const uint expected = 0b1101_1011;
-            PushFormatR(4, 5, 6, 0, 0b10_0101);
+            PushFormatR(4, 5, 6, 0, Functions.Or);
 
             target.CycleOnce();
 
@@ -755,7 +755,7 @@ namespace Mips.Emulator.UnitTest
             target.Registers[4] = 0b1101_0011;
             const uint inputVal = 0b1001_1010;
             const uint expected = 0b1101_1011;
-            PushFormatI(0b00_1101, 4, 6, inputVal);
+            PushFormatI(Opcodes.Ori, 4, 6, inputVal);
 
             target.CycleOnce();
 
@@ -769,7 +769,7 @@ namespace Mips.Emulator.UnitTest
             const byte value = 0xAB;
             target.Registers[4] = address;
             target.Registers[6] = value;
-            PushFormatI(0b10_1000, 4, 6, 0);
+            PushFormatI(Opcodes.Sb, 4, 6, 0);
 
             target.CycleOnce();
 
@@ -783,7 +783,7 @@ namespace Mips.Emulator.UnitTest
             const int shamt = 1;
             const uint expected = 0b1_1010_0110;
             target.Registers[4] = value;
-            PushFormatR(0, 4, 6, shamt, 0b00_0000);
+            PushFormatR(0, 4, 6, shamt, Functions.Sll);
 
             target.CycleOnce();
 
@@ -797,7 +797,7 @@ namespace Mips.Emulator.UnitTest
             const int shamt = 3;
             const uint expected = 0b110_1001_1000;
             target.Registers[4] = value;
-            PushFormatR(0, 4, 6, shamt, 0b00_0000);
+            PushFormatR(0, 4, 6, shamt, Functions.Sll);
 
             target.CycleOnce();
 
@@ -812,7 +812,7 @@ namespace Mips.Emulator.UnitTest
             const uint expected = 0b1_1010_0110;
             target.Registers[4] = value;
             target.Registers[5] = shamt;
-            PushFormatR(5, 4, 6, 0, 0b00_0100);
+            PushFormatR(5, 4, 6, 0, Functions.Sllv);
 
             target.CycleOnce();
 
@@ -827,7 +827,7 @@ namespace Mips.Emulator.UnitTest
             const uint expected = 0b110_1001_1000;
             target.Registers[4] = value;
             target.Registers[5] = shamt;
-            PushFormatR(5, 4, 6, 0, 0b00_0100);
+            PushFormatR(5, 4, 6, 0, Functions.Sllv);
 
             target.CycleOnce();
 
@@ -841,7 +841,7 @@ namespace Mips.Emulator.UnitTest
             const uint lesserValue = 2400;
             target.Registers[4] = lesserValue;
             target.Registers[5] = greaterValue;
-            PushFormatR(4, 5, 6, 0, 0b10_1010);
+            PushFormatR(4, 5, 6, 0, Functions.Slt);
 
             target.CycleOnce();
 
@@ -855,7 +855,7 @@ namespace Mips.Emulator.UnitTest
             const uint lesserValue = 2400;
             target.Registers[4] = greaterValue;
             target.Registers[5] = lesserValue;
-            PushFormatR(4, 5, 6, 0, 0b10_1010);
+            PushFormatR(4, 5, 6, 0, Functions.Slt);
 
             target.CycleOnce();
 
@@ -868,7 +868,7 @@ namespace Mips.Emulator.UnitTest
             const uint value = 2400;
             target.Registers[4] = value;
             target.Registers[5] = value;
-            PushFormatR(4, 5, 6, 0, 0b10_1010);
+            PushFormatR(4, 5, 6, 0, Functions.Slt);
 
             target.CycleOnce();
 
@@ -882,7 +882,7 @@ namespace Mips.Emulator.UnitTest
             const uint lesserValue = unchecked((uint)-7800);
             target.Registers[4] = lesserValue;
             target.Registers[5] = greaterValue;
-            PushFormatR(4, 5, 6, 0, 0b10_1010);
+            PushFormatR(4, 5, 6, 0, Functions.Slt);
 
             target.CycleOnce();
 
@@ -896,7 +896,7 @@ namespace Mips.Emulator.UnitTest
             const uint lesserValue = unchecked((uint)-7800);
             target.Registers[4] = greaterValue;
             target.Registers[5] = lesserValue;
-            PushFormatR(4, 5, 6, 0, 0b10_1010);
+            PushFormatR(4, 5, 6, 0, Functions.Slt);
 
             target.CycleOnce();
 
@@ -909,7 +909,7 @@ namespace Mips.Emulator.UnitTest
             const uint greaterValue = 7800;
             const uint lesserValue = 2400;
             target.Registers[4] = lesserValue;
-            PushFormatI(0b00_1010, 4, 6, greaterValue);
+            PushFormatI(Opcodes.Slti, 4, 6, greaterValue);
 
             target.CycleOnce();
 
@@ -922,7 +922,7 @@ namespace Mips.Emulator.UnitTest
             const uint greaterValue = 7800;
             const uint lesserValue = 2400;
             target.Registers[4] = greaterValue;
-            PushFormatI(0b00_1010, 4, 6, lesserValue);
+            PushFormatI(Opcodes.Slti, 4, 6, lesserValue);
 
             target.CycleOnce();
 
@@ -934,7 +934,7 @@ namespace Mips.Emulator.UnitTest
         {
             const uint value = 7800;
             target.Registers[4] = value;
-            PushFormatI(0b00_1010, 4, 6, value);
+            PushFormatI(Opcodes.Slti, 4, 6, value);
 
            target.CycleOnce();
 
@@ -948,7 +948,7 @@ namespace Mips.Emulator.UnitTest
             const uint lesserValue = 2400;
             target.Registers[4] = lesserValue;
             target.Registers[5] = greaterValue;
-            PushFormatR(4, 5, 6, 0, 0b10_1011);
+            PushFormatR(4, 5, 6, 0, Functions.Sltu);
 
             target.CycleOnce();
 
@@ -962,7 +962,7 @@ namespace Mips.Emulator.UnitTest
             const uint lesserValue = 2400;
             target.Registers[4] = greaterValue;
             target.Registers[5] = lesserValue;
-            PushFormatR(4, 5, 6, 0, 0b10_1011);
+            PushFormatR(4, 5, 6, 0, Functions.Sltu);
 
             target.CycleOnce();
 
@@ -975,7 +975,7 @@ namespace Mips.Emulator.UnitTest
             const uint value = 2400;
             target.Registers[4] = value;
             target.Registers[5] = value;
-            PushFormatR(4, 5, 6, 0, 0b10_1011);
+            PushFormatR(4, 5, 6, 0, Functions.Sltu);
 
             target.CycleOnce();
 
@@ -991,7 +991,7 @@ namespace Mips.Emulator.UnitTest
             const uint lesserValue = 2400;
             target.Registers[4] = lesserValue;
             target.Registers[5] = greaterValue;
-            PushFormatR(4, 5, 6, 0, 0b10_1011);
+            PushFormatR(4, 5, 6, 0, Functions.Sltu);
 
             target.CycleOnce();
 
@@ -1005,7 +1005,7 @@ namespace Mips.Emulator.UnitTest
             const uint lesserValue = unchecked((uint)-7800);
             target.Registers[4] = greaterValue;
             target.Registers[5] = lesserValue;
-            PushFormatR(4, 5, 6, 0, 0b10_1011);
+            PushFormatR(4, 5, 6, 0, Functions.Sltu);
 
             target.CycleOnce();
 
@@ -1018,7 +1018,7 @@ namespace Mips.Emulator.UnitTest
             const uint greaterValue = 7800;
             const uint lesserValue = 2400;
             target.Registers[4] = lesserValue;
-            PushFormatI(0b00_1011, 4, 6, greaterValue);
+            PushFormatI(Opcodes.Sltiu, 4, 6, greaterValue);
 
             target.CycleOnce();
 
@@ -1031,7 +1031,7 @@ namespace Mips.Emulator.UnitTest
             const uint greaterValue = 7800;
             const uint lesserValue = 2400;
             target.Registers[4] = greaterValue;
-            PushFormatI(0b00_1011, 4, 6, lesserValue);
+            PushFormatI(Opcodes.Sltiu, 4, 6, lesserValue);
 
             target.CycleOnce();
 
@@ -1043,7 +1043,7 @@ namespace Mips.Emulator.UnitTest
         {
             const uint value = 7800;
             target.Registers[4] = value;
-            PushFormatI(0b00_1011, 4, 6, value);
+            PushFormatI(Opcodes.Sltiu, 4, 6, value);
 
             target.CycleOnce();
 
@@ -1057,7 +1057,7 @@ namespace Mips.Emulator.UnitTest
             const int shamt = 3;
             const uint expected = 0b0000_0001_1010;
             target.Registers[4] = value;
-            PushFormatR(0, 4, 6, shamt, 0b00_0011);
+            PushFormatR(0, 4, 6, shamt, Functions.Sra);
 
             target.CycleOnce();
 
@@ -1072,7 +1072,7 @@ namespace Mips.Emulator.UnitTest
             const int shamt = 3;
             const uint expected = 0b1111_0000_0000_0000_0000_0000_0001_1010;
             target.Registers[4] = value;
-            PushFormatR(0, 4, 6, shamt, 0b00_0011);
+            PushFormatR(0, 4, 6, shamt, Functions.Sra);
 
             target.CycleOnce();
 
@@ -1086,7 +1086,7 @@ namespace Mips.Emulator.UnitTest
             const int shamt = 3;
             const uint expected = 0b0000_0001_1010;
             target.Registers[4] = value;
-            PushFormatR(0, 4, 6, shamt, 0b00_0010);
+            PushFormatR(0, 4, 6, shamt, Functions.Srl);
 
             target.CycleOnce();
 
@@ -1101,7 +1101,7 @@ namespace Mips.Emulator.UnitTest
             const int shamt = 3;
             const uint expected = 0b0001_0000_0000_0000_0000_0000_0001_1010;
             target.Registers[4] = value;
-            PushFormatR(0, 4, 6, shamt, 0b00_0010);
+            PushFormatR(0, 4, 6, shamt, Functions.Srl);
 
             target.CycleOnce();
 
@@ -1116,7 +1116,7 @@ namespace Mips.Emulator.UnitTest
             const uint expected = 0b0000_0001_1010;
             target.Registers[4] = value;
             target.Registers[5] = shamt;
-            PushFormatR(5, 4, 6, 0, 0b00_0110);
+            PushFormatR(5, 4, 6, 0, Functions.Srlv);
 
             target.CycleOnce();
 
@@ -1132,7 +1132,7 @@ namespace Mips.Emulator.UnitTest
             const uint expected = 0b0001_0000_0000_0000_0000_0000_0001_1010;
             target.Registers[4] = value;
             target.Registers[5] = shamt;
-            PushFormatR(5, 4, 6, 0, 0b00_0110);
+            PushFormatR(5, 4, 6, 0, Functions.Srlv);
 
             target.CycleOnce();
 
@@ -1144,7 +1144,7 @@ namespace Mips.Emulator.UnitTest
         {
             target.Registers[4] = 234;
             target.Registers[5] = 123;
-            PushFormatR(4, 5, 6, 0, 0b10_0010);
+            PushFormatR(4, 5, 6, 0, Functions.Sub);
 
             target.CycleOnce();
 
@@ -1157,7 +1157,7 @@ namespace Mips.Emulator.UnitTest
         {
             target.Registers[4] = unchecked((uint)int.MinValue);
             target.Registers[5] = 234;
-            PushFormatR(4, 5, 6, 0, 0b10_0010);
+            PushFormatR(4, 5, 6, 0, Functions.Sub);
 
             target.CycleOnce();
         }
@@ -1167,7 +1167,7 @@ namespace Mips.Emulator.UnitTest
         {
             target.Registers[4] = 234;
             target.Registers[5] = 123;
-            PushFormatR(4, 5, 6, 0, 0b10_0011);
+            PushFormatR(4, 5, 6, 0, Functions.Subu);
 
             target.CycleOnce();
 
@@ -1180,7 +1180,7 @@ namespace Mips.Emulator.UnitTest
             uint minuend = unchecked((uint)int.MinValue);
             target.Registers[4] = minuend;
             target.Registers[5] = 234;
-            PushFormatR(4, 5, 6, 0, 0b10_0011);
+            PushFormatR(4, 5, 6, 0, Functions.Subu);
 
             target.CycleOnce();
 
@@ -1194,7 +1194,7 @@ namespace Mips.Emulator.UnitTest
             const uint value = 0xABCDEF01;
             target.Registers[4] = address;
             target.Registers[6] = value;
-            PushFormatI(0b10_1011, 4, 6, 0);
+            PushFormatI(Opcodes.Sw, 4, 6, 0);
 
             target.CycleOnce();
 
@@ -1207,7 +1207,7 @@ namespace Mips.Emulator.UnitTest
             target.Registers[4] = 0b1101_0011;
             target.Registers[5] = 0b1001_1010;
             const uint expected = 0b0100_1001;
-            PushFormatR(4, 5, 6, 0, 0b10_0110);
+            PushFormatR(4, 5, 6, 0, Functions.Xor);
 
             target.CycleOnce();
 
@@ -1220,7 +1220,7 @@ namespace Mips.Emulator.UnitTest
             target.Registers[4] = 0b1101_0011;
             const uint inputVal = 0b1001_1010;
             const uint expected = 0b0100_1001;
-            PushFormatI(0b00_1110, 4, 6, inputVal);
+            PushFormatI(Opcodes.Xori, 4, 6, inputVal);
 
             target.CycleOnce();
 

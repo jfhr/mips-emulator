@@ -11,7 +11,7 @@ namespace Mips.Emulator.UnitTest
         [TestMethod]
         public void WriteTo0()
         {
-            var target = new RegisterSet();
+            RegisterSet target = new();
 
             target[0] = 1234;
 
@@ -22,7 +22,7 @@ namespace Mips.Emulator.UnitTest
         [TestMethod]
         public void WriteToAt()
         {
-            var target = new RegisterSet();
+            RegisterSet target = new();
 
             target.At = 1234;
 
@@ -33,7 +33,7 @@ namespace Mips.Emulator.UnitTest
         [TestMethod]
         public void WriteToV0()
         {
-            var target = new RegisterSet();
+            RegisterSet target = new();
 
             target.V0 = 1234;
 
@@ -45,7 +45,7 @@ namespace Mips.Emulator.UnitTest
         [TestMethod]
         public void WriteToV1()
         {
-            var target = new RegisterSet();
+            RegisterSet target = new();
 
             target.V1 = 1234;
 
@@ -57,7 +57,7 @@ namespace Mips.Emulator.UnitTest
         [TestMethod]
         public void WriteToA0()
         {
-            var target = new RegisterSet();
+            RegisterSet target = new();
 
             target.A0 = 1234;
 
@@ -69,7 +69,7 @@ namespace Mips.Emulator.UnitTest
         [TestMethod]
         public void WriteToA1()
         {
-            var target = new RegisterSet();
+            RegisterSet target = new();
 
             target.A1 = 1234;
 
@@ -81,7 +81,7 @@ namespace Mips.Emulator.UnitTest
         [TestMethod]
         public void WriteToA2()
         {
-            var target = new RegisterSet();
+            RegisterSet target = new();
 
             target.A2 = 1234;
 
@@ -93,7 +93,7 @@ namespace Mips.Emulator.UnitTest
         [TestMethod]
         public void WriteToA3()
         {
-            var target = new RegisterSet();
+            RegisterSet target = new();
 
             target.A3 = 1234;
 
@@ -105,7 +105,7 @@ namespace Mips.Emulator.UnitTest
         [TestMethod]
         public void WriteToT0()
         {
-            var target = new RegisterSet();
+            RegisterSet target = new();
 
             target.T0 = 1234;
 
@@ -117,7 +117,7 @@ namespace Mips.Emulator.UnitTest
         [TestMethod]
         public void WriteToT1()
         {
-            var target = new RegisterSet();
+            RegisterSet target = new();
 
             target.T1 = 1234;
 
@@ -129,7 +129,7 @@ namespace Mips.Emulator.UnitTest
         [TestMethod]
         public void WriteToT2()
         {
-            var target = new RegisterSet();
+            RegisterSet target = new();
 
             target.T2 = 1234;
 
@@ -141,7 +141,7 @@ namespace Mips.Emulator.UnitTest
         [TestMethod]
         public void WriteToT3()
         {
-            var target = new RegisterSet();
+            RegisterSet target = new();
 
             target.T3 = 1234;
 
@@ -153,7 +153,7 @@ namespace Mips.Emulator.UnitTest
         [TestMethod]
         public void WriteToT4()
         {
-            var target = new RegisterSet();
+            RegisterSet target = new();
 
             target.T4 = 1234;
 
@@ -165,7 +165,7 @@ namespace Mips.Emulator.UnitTest
         [TestMethod]
         public void WriteToT5()
         {
-            var target = new RegisterSet();
+            RegisterSet target = new();
 
             target.T5 = 1234;
 
@@ -177,7 +177,7 @@ namespace Mips.Emulator.UnitTest
         [TestMethod]
         public void WriteToT6()
         {
-            var target = new RegisterSet();
+            RegisterSet target = new();
 
             target.T6 = 1234;
 
@@ -189,7 +189,7 @@ namespace Mips.Emulator.UnitTest
         [TestMethod]
         public void WriteToT7()
         {
-            var target = new RegisterSet();
+            RegisterSet target = new();
 
             target.T7 = 1234;
 
@@ -201,7 +201,7 @@ namespace Mips.Emulator.UnitTest
         [TestMethod]
         public void WriteToS0()
         {
-            var target = new RegisterSet();
+            RegisterSet target = new();
 
             target.S0 = 1234;
 
@@ -213,7 +213,7 @@ namespace Mips.Emulator.UnitTest
         [TestMethod]
         public void WriteToS1()
         {
-            var target = new RegisterSet();
+            RegisterSet target = new();
 
             target.S1 = 1234;
 
@@ -225,7 +225,7 @@ namespace Mips.Emulator.UnitTest
         [TestMethod]
         public void WriteToS2()
         {
-            var target = new RegisterSet();
+            RegisterSet target = new();
 
             target.S2 = 1234;
 
@@ -237,7 +237,7 @@ namespace Mips.Emulator.UnitTest
         [TestMethod]
         public void WriteToS3()
         {
-            var target = new RegisterSet();
+            RegisterSet target = new();
 
             target.S3 = 1234;
 
@@ -249,7 +249,7 @@ namespace Mips.Emulator.UnitTest
         [TestMethod]
         public void WriteToS4()
         {
-            var target = new RegisterSet();
+            RegisterSet target = new();
 
             target.S4 = 1234;
 
@@ -261,7 +261,7 @@ namespace Mips.Emulator.UnitTest
         [TestMethod]
         public void WriteToS5()
         {
-            var target = new RegisterSet();
+            RegisterSet target = new();
 
             target.S5 = 1234;
 
@@ -273,7 +273,7 @@ namespace Mips.Emulator.UnitTest
         [TestMethod]
         public void WriteToS6()
         {
-            var target = new RegisterSet();
+            RegisterSet target = new();
 
             target.S6 = 1234;
 
@@ -285,7 +285,7 @@ namespace Mips.Emulator.UnitTest
         [TestMethod]
         public void WriteToS7()
         {
-            var target = new RegisterSet();
+            RegisterSet target = new();
 
             target.S7 = 1234;
 
@@ -297,7 +297,7 @@ namespace Mips.Emulator.UnitTest
         [TestMethod]
         public void WriteToT8()
         {
-            var target = new RegisterSet();
+            RegisterSet target = new();
 
             target.T8 = 1234;
 
@@ -309,7 +309,7 @@ namespace Mips.Emulator.UnitTest
         [TestMethod]
         public void WriteToT9()
         {
-            var target = new RegisterSet();
+            RegisterSet target = new();
 
             target.T9 = 1234;
 
@@ -321,7 +321,7 @@ namespace Mips.Emulator.UnitTest
         [TestMethod]
         public void WriteToK0()
         {
-            var target = new RegisterSet();
+            RegisterSet target = new();
 
             target.K0 = 1234;
 
@@ -333,7 +333,7 @@ namespace Mips.Emulator.UnitTest
         [TestMethod]
         public void WriteToK1()
         {
-            var target = new RegisterSet();
+            RegisterSet target = new();
 
             target.K1 = 1234;
 
@@ -345,7 +345,7 @@ namespace Mips.Emulator.UnitTest
         [TestMethod]
         public void WriteToGp()
         {
-            var target = new RegisterSet();
+            RegisterSet target = new();
 
             target.Gp = 1234;
 
@@ -357,7 +357,7 @@ namespace Mips.Emulator.UnitTest
         [TestMethod]
         public void WriteToSp()
         {
-            var target = new RegisterSet();
+            RegisterSet target = new();
 
             target.Sp = 1234;
 
@@ -369,7 +369,7 @@ namespace Mips.Emulator.UnitTest
         [TestMethod]
         public void WriteToFp()
         {
-            var target = new RegisterSet();
+            RegisterSet target = new();
 
             target.Fp = 1234;
 
@@ -381,7 +381,7 @@ namespace Mips.Emulator.UnitTest
         [TestMethod]
         public void WriteToRa()
         {
-            var target = new RegisterSet();
+            RegisterSet target = new();
 
             target.Ra = 1234;
 
@@ -393,7 +393,7 @@ namespace Mips.Emulator.UnitTest
         [TestMethod]
         public void WriteToLo()
         {
-            var target = new RegisterSet();
+            RegisterSet target = new();
 
             target.Lo = 1234;
 
@@ -405,7 +405,7 @@ namespace Mips.Emulator.UnitTest
         [TestMethod]
         public void WriteToHi()
         {
-            var target = new RegisterSet();
+            RegisterSet target = new();
 
             target.Hi = 1234;
 

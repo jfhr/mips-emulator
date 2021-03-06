@@ -15,8 +15,8 @@ namespace Mips.Assembler
         private readonly StringEnumerator code;
         private readonly IMemory memory;
 
-        private readonly List<Message> messages = new List<Message>();
-        private readonly Dictionary<string, uint> labels = new Dictionary<string, uint>();
+        private readonly List<Message> messages = new();
+        private readonly Dictionary<string, uint> labels = new();
         private bool writeEnable = false;
         private bool secondPass = false;
         private uint memoryAddress = 0;
@@ -41,7 +41,7 @@ namespace Mips.Assembler
         /// </summary>
         public AssemblerInstance(string code, IMemory memory)
         {
-            this.code = new StringEnumerator(code);
+            this.code = new(code);
             this.code.MoveNext();
             this.memory = memory;
         }
@@ -513,7 +513,7 @@ namespace Mips.Assembler
         /// </summary>
         public bool TryReadAsciiString(out byte[] value)
         {
-            var bytes = new List<byte>();
+            List<byte> bytes = new();
             if (code.Current == '"')
             {
                 bool isEscape = false;
@@ -993,13 +993,7 @@ namespace Mips.Assembler
             // We still go through the rest of the code to create error and info messages.
             memory.Reset();
             writeEnable = false;
-            messages.Add(new Message
-            {
-                StartIndex = startIndex,
-                EndIndex = endIndex,
-                IsError = true,
-                Content = message,
-            });
+            messages.Add(new Message(startIndex, endIndex, true, message));
         }
 
         /// <summary>
@@ -1012,13 +1006,7 @@ namespace Mips.Assembler
                 message = string.Format(message, args);
             }
 
-            messages.Add(new Message
-            {
-                StartIndex = startIndex,
-                EndIndex = endIndex,
-                IsError = false,
-                Content = message,
-            });
+            messages.Add(new Message(startIndex, endIndex, false, message));
         }
 
         /// <summary>

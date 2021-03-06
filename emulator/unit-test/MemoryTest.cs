@@ -8,7 +8,7 @@ namespace Mips.Emulator.UnitTest
         [TestMethod]
         public void Read_0()
         {
-            var target = new Memory();
+            Memory target = new();
 
             byte value = target[0];
 
@@ -18,7 +18,7 @@ namespace Mips.Emulator.UnitTest
         [TestMethod]
         public void Write_0()
         {
-            var target = new Memory();
+            Memory target = new();
 
             target[0] = 210;
 
@@ -28,7 +28,7 @@ namespace Mips.Emulator.UnitTest
         [TestMethod]
         public void Read_0xDEADBEEF()
         {
-            var target = new Memory();
+            Memory target = new();
 
             byte value = target[0xDEADBEEF];
 
@@ -38,7 +38,7 @@ namespace Mips.Emulator.UnitTest
         [TestMethod]
         public void Write_0xDEADBEEF()
         {
-            var target = new Memory();
+            Memory target = new();
 
             target[0xDEADBEEF] = 189;
 
@@ -48,7 +48,7 @@ namespace Mips.Emulator.UnitTest
         [TestMethod]
         public void LoadWord_0()
         {
-            var target = new Memory();
+            Memory target = new();
 
             uint value = target.LoadWord(0);
 
@@ -58,7 +58,7 @@ namespace Mips.Emulator.UnitTest
         [TestMethod]
         public void StoreWord_0()
         {
-            var target = new Memory();
+            Memory target = new();
 
             target.StoreWord(0, 0xDEADBEEF);
 
@@ -73,7 +73,7 @@ namespace Mips.Emulator.UnitTest
         [TestMethod]
         public void StoreWord_25002()
         {
-            var target = new Memory();
+            Memory target = new();
 
             // 25002 is not div by 4, so should store at 25000 instead.
             target.StoreWord(25002, 0xDEADBEEF);
@@ -90,7 +90,7 @@ namespace Mips.Emulator.UnitTest
         [TestMethod]
         public void Reset()
         {
-            var target = new Memory();
+            Memory target = new();
             target.StoreWord(0xF00BA, 123u);
             target[0xDEADBEEF] = 189;
 

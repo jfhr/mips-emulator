@@ -105,19 +105,7 @@ namespace Mips.Assembler
             LI,
         }
 
-        public class InstructionInfo
-        {
-            public InstructionInfo(InstructionSyntaxType type, uint functionOrOpcode, string help)
-            {
-                Type = type;
-                FunctionOrOpcode = functionOrOpcode;
-                Help = help;
-            }
-
-            public InstructionSyntaxType Type { get; }
-            public uint FunctionOrOpcode { get; }
-            public string Help { get; }
-        }
+        public record InstructionInfo(InstructionSyntaxType Type, uint FunctionOrOpcode, string Help);
 
         public static IAssemblerResult Assemble(string code, IMemory target)
         {

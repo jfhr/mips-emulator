@@ -34,7 +34,7 @@ namespace Mips.IntegrationTest
         [DynamicData(nameof(PrimeTestData))]
         public void NaivePrimalityTest(uint number, bool isPrime)
         {
-            var cpu = new Cpu();
+            Cpu cpu = new();
             string code = File.ReadAllText("NaivePrimalityTest.asm");
 
             var assemblyResult = MipsAsm.Assemble(code, cpu.Memory);
@@ -70,7 +70,7 @@ namespace Mips.IntegrationTest
         [DynamicData(nameof(StringLengthTestData))]
         public void StringLengthTest(string s)
         {
-            var cpu = new Cpu();
+            Cpu cpu = new();
             string code = File.ReadAllText("StringLengthTest.asm");
             
             var bytes = Encoding.UTF8.GetBytes(s);
