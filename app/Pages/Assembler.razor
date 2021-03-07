@@ -1,10 +1,15 @@
 ﻿@page "/code"
 
-<h1>Code</h1>
+<div class="row">
+    <div class="col-1"><h1>Code</h1></div>
+    <div class="col-11">
+        <button class="btn btn-primary" @onclick="Assemble" disabled="@(!IsDirty)">Assemble</button>
+    </div>
+</div>
 
-<button class="btn btn-primary" @onclick="Assemble" disabled="@(!IsDirty)">Assemble</button>
-
-<textarea @bind-value="Code" @bind-value:event="oninput"></textarea>
+<div class="row">
+    <textarea id="monaco-container" class="col-12" @bind-value="Code" @bind-value:event="oninput"></textarea>
+</div>
 
 @code {
     string Code

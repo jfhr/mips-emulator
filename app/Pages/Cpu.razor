@@ -1,178 +1,28 @@
 ﻿@page "/cpu"
 
-<h1>Cpu</h1>
+<div class="row">
+    <div class="col-1"><h1>Cpu</h1></div>
+    <div class="col-11">
+        <button class="btn btn-primary" @onclick="RunProgram">Run program</button>
+        <button class="btn btn-secondary" @onclick="RunOneCycle">Run one cycle</button>
+    </div>
+</div>
 
-<button @onclick="RunProgram">Run program</button>
-<button @onclick="RunOneCycle">Run one cycle</button>
-
-<table>
-    <tbody>
-        <tr>
-            <td>At</td>
-            <td>@Runtime.RegisterSet.At</td>
-        </tr>
-
-        <tr>
-            <td>V0</td>
-            <td>@Runtime.RegisterSet.V0</td>
-        </tr>
-
-        <tr>
-            <td>V1</td>
-            <td>@Runtime.RegisterSet.V1</td>
-        </tr>
-
-        <tr>
-            <td>A0</td>
-            <td>@Runtime.RegisterSet.A0</td>
-        </tr>
-
-        <tr>
-            <td>A1</td>
-            <td>@Runtime.RegisterSet.A1</td>
-        </tr>
-
-        <tr>
-            <td>A2</td>
-            <td>@Runtime.RegisterSet.A2</td>
-        </tr>
-
-        <tr>
-            <td>A3</td>
-            <td>@Runtime.RegisterSet.A3</td>
-        </tr>
-
-        <tr>
-            <td>T0</td>
-            <td>@Runtime.RegisterSet.T0</td>
-        </tr>
-
-        <tr>
-            <td>T1</td>
-            <td>@Runtime.RegisterSet.T1</td>
-        </tr>
-
-        <tr>
-            <td>T2</td>
-            <td>@Runtime.RegisterSet.T2</td>
-        </tr>
-
-        <tr>
-            <td>T3</td>
-            <td>@Runtime.RegisterSet.T3</td>
-        </tr>
-
-        <tr>
-            <td>T4</td>
-            <td>@Runtime.RegisterSet.T4</td>
-        </tr>
-
-        <tr>
-            <td>T5</td>
-            <td>@Runtime.RegisterSet.T5</td>
-        </tr>
-
-        <tr>
-            <td>T6</td>
-            <td>@Runtime.RegisterSet.T6</td>
-        </tr>
-
-        <tr>
-            <td>T7</td>
-            <td>@Runtime.RegisterSet.T7</td>
-        </tr>
-        <tr>
-            <td>S0</td>
-            <td>@Runtime.RegisterSet.S0</td>
-        </tr>
-
-        <tr>
-            <td>S1</td>
-            <td>@Runtime.RegisterSet.S1</td>
-        </tr>
-
-        <tr>
-            <td>S2</td>
-            <td>@Runtime.RegisterSet.S2</td>
-        </tr>
-
-        <tr>
-            <td>S3</td>
-            <td>@Runtime.RegisterSet.S3</td>
-        </tr>
-
-        <tr>
-            <td>S4</td>
-            <td>@Runtime.RegisterSet.S4</td>
-        </tr>
-
-        <tr>
-            <td>S5</td>
-            <td>@Runtime.RegisterSet.S5</td>
-        </tr>
-
-        <tr>
-            <td>S6</td>
-            <td>@Runtime.RegisterSet.S6</td>
-        </tr>
-
-        <tr>
-            <td>S7</td>
-            <td>@Runtime.RegisterSet.S7</td>
-        </tr>
-
-        <tr>
-            <td>T8</td>
-            <td>@Runtime.RegisterSet.T8</td>
-        </tr>
-
-        <tr>
-            <td>T9</td>
-            <td>@Runtime.RegisterSet.T9</td>
-        </tr>
-
-        <tr>
-            <td>K0</td>
-            <td>@Runtime.RegisterSet.K0</td>
-        </tr>
-
-        <tr>
-            <td>K1</td>
-            <td>@Runtime.RegisterSet.K1</td>
-        </tr>
-
-        <tr>
-            <td>GP</td>
-            <td>@Runtime.RegisterSet.Gp</td>
-        </tr>
-
-        <tr>
-            <td>SP</td>
-            <td>@Runtime.RegisterSet.Sp</td>
-        </tr>
-
-        <tr>
-            <td>Fp</td>
-            <td>@Runtime.RegisterSet.Fp</td>
-        </tr>
-
-        <tr>
-            <td>RA</td>
-            <td>@Runtime.RegisterSet.Ra</td>
-        </tr>
-
-        <tr>
-            <td>LO</td>
-            <td>@Runtime.RegisterSet.Lo</td>
-        </tr>
-
-        <tr>
-            <td>HI</td>
-            <td>@Runtime.RegisterSet.Hi</td>
-        </tr>
-
-    </tbody>
-</table>
+<div class="row">
+    <div class="col-1">
+        <table class="table table-sm table-bordered table-hover">
+            <tbody>
+                @for (int i = 0; i < 32; i++)
+                {
+                    <tr>
+                        <td>@Mips.Emulator.Constants.RegisterNames[i]</td>
+                        <td>@Runtime.Cpu.Registers[i]</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
 
 @code {
     private void RunProgram() => Runtime.Cpu.CycleUntilTerminate();

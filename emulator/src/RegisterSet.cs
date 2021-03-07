@@ -6,7 +6,11 @@
 
         public uint this[int index]
         {
-            get => reg[index];
+            get
+            {
+                return reg[index];
+            }
+
             set
             {
                 // no write to zero
