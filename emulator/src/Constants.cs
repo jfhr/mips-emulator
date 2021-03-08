@@ -56,7 +56,7 @@
 
     public static class Constants
     {
-        public static readonly string[] RegisterNames = new string[]
+        public static readonly string[] RegisterNames = 
         {
             "zero", "at",
             "v0", "v1",

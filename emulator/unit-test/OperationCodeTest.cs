@@ -6,7 +6,8 @@ namespace Mips.Emulator.UnitTest
     [TestClass]
     public class OperationCodeTest
     {
-        public static IEnumerable<object[]> FormatRTestData => new object[][] {
+        public static IEnumerable<object[]> FormatRTestData => new[]
+        {
             new object[] { 0b0000_0000_0000_0000_0000_0000_0000_0000u, 0, 0, 0, 0, 0u },
             new object[] { 0b0000_0000_0000_0000_0000_0000_0001_1010u, 0, 0, 0, 0, 0b1_1010u },
             new object[] { 0b0000_0000_0000_0000_0000_0000_0011_1010u, 0, 0, 0, 0, 0b11_1010u },
@@ -22,7 +23,8 @@ namespace Mips.Emulator.UnitTest
         }
 
         
-        public static IEnumerable<object[]> FormatITestData => new object[][] {
+        public static IEnumerable<object[]> FormatITestData => new[]
+        {
             new object[] { 0b0010_0010_1010_1010_1000_0000_0000_0000u, 0b0010_00u, 0b10101, 0b01010, 0x8000u},
         };
 
@@ -34,7 +36,8 @@ namespace Mips.Emulator.UnitTest
         }
 
 
-        public static IEnumerable<object[]> FormatJTestData => new object[][] {
+        public static IEnumerable<object[]> FormatJTestData => new[]
+        {
             new object[] { 0x08DEADBEu, 0xDEADBEu, false},
             new object[] { 0x0CDEADBEu, 0xDEADBEu, true},
         };

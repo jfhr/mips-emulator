@@ -23,7 +23,7 @@ namespace Mips.Emulator
         /// </summary>
         private const int nPages = 1024 * 4;
 
-        private uint largestWrittenAddress = 0;
+        private uint largestWrittenAddress;
 
         private readonly byte[][] pages;
 
@@ -92,10 +92,7 @@ namespace Mips.Emulator
         {
             int page = (int)(index / pageSize);
             int intIndex = (int)(index % pageSize);
-            if (pages[page] == null)
-            {
-                pages[page] = new byte[pageSize];
-            }
+            pages[page] ??= new byte[pageSize];
             return (page, intIndex);
         }
 

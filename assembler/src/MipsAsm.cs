@@ -18,7 +18,7 @@ namespace Mips.Assembler
             Instructions[name] = new InstructionInfo(type, functionOrOpcode, help);
         }
 
-        public static void InitializeInstructions()
+        private static void InitializeInstructions()
         {
             AddInstruction(InstructionSyntaxType.ArithLog, "add", Functions.Add, "add $d,$s,$t: Add $s and $t and store the result in $d. If the calculation overflows, an error is thrown.");
             AddInstruction(InstructionSyntaxType.ArithLog, "addu", Functions.Addu, "addu $d,$s,$t: Add $s and $t and store the result in $d. The calculation may overflow.");

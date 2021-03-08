@@ -661,7 +661,7 @@ namespace Mips.Assembler
             {
                 code.MoveNext();
             }
-            if (TryRead0x())
+            if (TryRead0X())
             {
                 numberStartIndex += 2;
                 style = NumberStyles.HexNumber;
@@ -697,7 +697,7 @@ namespace Mips.Assembler
             return false;            
         }
 
-        public bool TryRead0x()
+        public bool TryRead0X()
         {
             var startIndex = code.Index;
             if (code.Current == '0'

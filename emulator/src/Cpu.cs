@@ -14,25 +14,19 @@ namespace Mips.Emulator
         /// <summary>
         /// The complete Register set, including hi and lo.
         /// </summary>
-        public RegisterSet Registers { get; }
+        public RegisterSet Registers { get; } = new();
 
         /// <summary>
         /// The computer memory. Up to 4 GiB are available,
         /// but not all virtual space may actually be 
         /// physically allocated.
         /// </summary>
-        public Memory Memory { get; }
+        public Memory Memory { get; } = new();
 
         /// <summary>
         /// The program counter.
         /// </summary>
         public uint Pc { get; private set; }
-
-        public Cpu()
-        {
-            Registers = new();
-            Memory = new();
-        }
 
         /// <summary>
         /// Runs Cpu cycles until the program terminates.
@@ -99,7 +93,7 @@ namespace Mips.Emulator
         /// <summary>
         /// Execute a format R (register) instruction.
         /// </summary>
-        void ExecuteFormatR(int rs, int rt, int rd, int shamt, uint function)
+        private void ExecuteFormatR(int rs, int rt, int rd, int shamt, uint function)
         {
             switch (function)
             {
@@ -202,14 +196,14 @@ namespace Mips.Emulator
         /// <summary>
         /// Execute a format J instruction (j or jal).
         /// </summary>
-        void ExecuteFormatJ(uint address, bool link)
+        private void ExecuteFormatJ(uint address, bool link)
         {
-            uint pc_upper_4_bit = Pc & 0xF0000000;
+            uint pcUpper4Bit = Pc & 0xF0000000;
             if (link)
             {
                 Link();
             }
-            Pc = pc_upper_4_bit | (address << 2);
+            Pc = pcUpper4Bit | (address << 2);
         }
 
         /// <summary>
@@ -359,8 +353,8 @@ namespace Mips.Emulator
             {
                 offset |= 0b1111_1111_1111_1100_0000_0000_0000_0000;
             }
-            int signed_offset = (int)offset;
-            Pc = (uint)(Pc + signed_offset);
+            int signedOffset = (int)offset;
+            Pc = (uint)(Pc + signedOffset);
         }
 
         /// <summary>

@@ -224,9 +224,9 @@ namespace Mips.Assembler.UnitTest
             new object[] {"\"\\\"", null},
 
             new object[] {"\"\"", System.Array.Empty<byte>()},
-            new object[] {"\"a\"", new byte[] { (byte)'a' } },
-            new object[] {"\"\\\\\"", new byte[] { (byte)'\\' } },
-            new object[] {"\"\\\"\"", new byte[] { (byte)'"' } },
+            new object[] {"\"a\"", new[] { (byte)'a' } },
+            new object[] {"\"\\\\\"", new[] { (byte)'\\' } },
+            new object[] {"\"\\\"\"", new[] { (byte)'"' } },
         };
 
         [TestMethod]

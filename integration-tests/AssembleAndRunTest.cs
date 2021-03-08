@@ -12,7 +12,7 @@ namespace Mips.IntegrationTest
     [TestClass]
     public class AssembleAndRunTest
     {
-        private readonly Random random = new Random();
+        private readonly Random random = new();
 
         public static IEnumerable<object[]> PrimeTestData => new[]
         {

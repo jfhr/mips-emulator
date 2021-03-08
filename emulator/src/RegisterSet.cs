@@ -6,10 +6,7 @@
 
         public uint this[int index]
         {
-            get
-            {
-                return reg[index];
-            }
+            get => reg[index];
 
             set
             {
