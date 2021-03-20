@@ -1,5 +1,11 @@
-﻿using Mips.Emulator;
+﻿using Mips.Assembler.Properties;
+using Mips.Emulator;
+using System;
+using System.Buffers.Binary;
 using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Text;
 
 namespace Mips.Assembler
 {
@@ -18,7 +24,7 @@ namespace Mips.Assembler
             Instructions[name] = new InstructionInfo(type, functionOrOpcode, help);
         }
 
-        public static void InitializeInstructions()
+        private static void InitializeInstructions()
         {
             AddInstruction(InstructionSyntaxType.ArithLog, "add", Functions.Add, "add $d,$s,$t: Add $s and $t and store the result in $d. If the calculation overflows, an error is thrown.");
             AddInstruction(InstructionSyntaxType.ArithLog, "addu", Functions.Addu, "addu $d,$s,$t: Add $s and $t and store the result in $d. The calculation may overflow.");
@@ -85,24 +91,31 @@ namespace Mips.Assembler
             AddInstruction(InstructionSyntaxType.Jump, "jal", Opcodes.Jal, "jal label: Save the current position in $ra, then jump to label.");
         }
 
-        public enum InstructionSyntaxType
+        [Flags]
+        public enum InstructionSyntaxType : uint
         {
-            ArithLog,
-            DivMult,
-            Shift,
-            ShiftV,
-            RJumpOrMove,
-            Move,
-            ArithLogI,
-            LoadI,
-            Branch,
-            BranchZ,
-            BranchAlways,
-            LoadStore,
-            Jump,
-            Trap,
-            LA,
-            LI,
+            ArithLog = 1 << 0,
+            DivMult = 1 << 1,
+            Shift = 1 << 2,
+            ShiftV = 1 << 3,
+            RJumpOrMove = 1 << 4,
+            FormatR = ArithLog | DivMult | Shift | ShiftV | RJumpOrMove,
+
+            ArithLogI = 1 << 5,
+            LoadI = 1 << 6,
+            Branch = 1 << 7,
+            BranchZ = 1 << 8,
+            LoadStore = 1 << 9,
+            FormatI = ArithLogI | LoadI | Branch | BranchZ | LoadStore,
+
+            Jump = 1 << 10,
+            Trap = 1 << 11,
+            FormatJ = Jump | Trap,
+
+            Move = 1 << 12,
+            BranchAlways = 1 << 13,
+            LA = 1 << 14,
+            LI = 1 << 15,            
         }
 
         public record InstructionInfo(InstructionSyntaxType Type, uint FunctionOrOpcode, string Help);
@@ -113,5 +126,97 @@ namespace Mips.Assembler
             instance.Assemble();
             return instance;
         }
+
+        public static IDisassemblerResult Disassemble(byte[] binary)
+        {
+            var instance = new DisassemblerInstance(binary);
+            instance.Disassemble();
+            return instance;
+        }
+    }
+
+    public class DisassemblerInstance : IDisassemblerResult
+    {
+        private readonly StringBuilder code = new();
+        private readonly Stream stream;
+        private readonly byte[] wordBuffer = new byte[4];
+        private readonly List<Message> errors = new();
+
+        public DisassemblerInstance(byte[] binary)
+        {
+            stream = new MemoryStream(binary);
+        }
+
+        public string Code => code.ToString();
+
+        public IEnumerable<Message> Errors => errors;
+
+        public void Disassemble()
+        {
+            TryReadInstruction();
+        }
+
+        public bool TryReadInstruction()
+        {
+            if (TryReadWord(out uint word))
+            {
+                if ((word & 0b1111_1100_0000_0000_0000_0000_0000_0000) == 0)
+                {
+                    return TryProcessFormatR(word);
+                }
+            }
+            return false;
+        }
+
+        public bool TryProcessFormatR(uint word)
+        {
+            var function = word & 0b0000_0000_0000_0000_0000_0000_0011_1111;
+            var ins = MipsAsm.Instructions
+                .Where(x => (x.Value.Type & MipsAsm.InstructionSyntaxType.FormatR) != 0)
+                .FirstOrDefault(x => x.Value.FunctionOrOpcode == function);
+
+            if (ins.Value == null)
+            {
+                return false;
+            }
+
+            return ins.Value.Type switch
+            {
+                MipsAsm.InstructionSyntaxType.ArithLog => TryProcessArithLog(word, ins.Key),
+                _ => false,
+            };
+        }
+
+        public bool TryProcessArithLog(uint word, string name)
+        {
+            OperationDecoder.DecodeFormatR(word, out int rs, out int rt, out int rd, out int shamt, out uint _);
+            if (shamt != 0)
+            {
+                return false;
+            }
+            code.AppendLine($"{name} ${Constants.RegisterNames[rd]},${Constants.RegisterNames[rs]},${Constants.RegisterNames[rt]}");
+            return true;
+        }
+
+        public bool TryReadWord(out uint word)
+        {
+            var bytesRead = stream.Read(wordBuffer);
+            if (bytesRead < 4)
+            {
+                word = 0;
+                return false;
+            }
+            word = BinaryPrimitives.ReadUInt32BigEndian(wordBuffer);
+            return true;
+        }
+
+
+    }
+
+    public interface IDisassemblerResult
+    {
+        string Code { get; }
+
+        IEnumerable<Message> Errors { get; }
     }
 }

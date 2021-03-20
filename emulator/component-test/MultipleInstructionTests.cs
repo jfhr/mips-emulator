@@ -12,7 +12,7 @@ namespace Mips.Emulator.ComponentTest
     [TestClass]
     public class MultipleInstructionTests
     {
-        private static readonly Random random = new Random();
+        private static readonly Random random = new();
         private Cpu target;
 
         [TestInitialize]

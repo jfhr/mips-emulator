@@ -1,0 +1,30 @@
+﻿@page "/cpu"
+
+<div class="row">
+    <div class="col-1"><h1>Cpu</h1></div>
+    <div class="col-11">
+        <button class="btn btn-primary" @onclick="RunProgram">Run program</button>
+        <button class="btn btn-secondary" @onclick="RunOneCycle">Run one cycle</button>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-1">
+        <table class="table table-sm table-bordered table-hover">
+            <tbody>
+                @for (int i = 0; i < 32; i++)
+                {
+                    <tr>
+                        <td>@Mips.Emulator.Constants.RegisterNames[i]</td>
+                        <td>@Runtime.Cpu.Registers[i]</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@code {
+    private void RunProgram() => Runtime.Cpu.CycleUntilTerminate();
+    private void RunOneCycle() => Runtime.Cpu.CycleOnce();
+}

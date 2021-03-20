@@ -5,7 +5,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>MIPS32 Assembler + Emulator</title>
-    <base href="/" />
+    <base href="." />
     <link href="css/bootstrap/bootstrap.min.css" rel="stylesheet" />
     <link href="css/app.css" rel="stylesheet" />
     <link href="Mips.App.styles.css" rel="stylesheet" />
@@ -22,7 +22,17 @@
         <a class="dismiss">🗙</a>
     </div>
     <script src="_framework/blazor.webassembly.js"></script>
-    <script>navigator.serviceWorker.register('service-worker.js');</script>
+    <script src="monaco-editor/min/vs/loader.min.js"></script>
+    <script>
+        require.config({ paths: { vs: 'monaco-editor/min/vs' } });
+
+        require(['vs/editor/editor.main'], function () {
+            var editor = monaco.editor.create(document.getElementById('monaco-container'), {
+                value: '# Your code goes here',
+                language: 'mips'
+            });
+        });
+    </script>
 </body>
 
 </html>

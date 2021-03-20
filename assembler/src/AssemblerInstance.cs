@@ -21,18 +21,6 @@ namespace Mips.Assembler
         private bool secondPass = false;
         private uint memoryAddress = 0;
 
-        private static readonly string[] registerNames = new string[]
-        {
-            "zero", "at",
-            "v0", "v1",
-            "a0", "a1", "a2", "a3",
-            "t0", "t1", "t2", "t3", "t4", "t5", "t6", "t7",
-            "s0", "s1", "s2", "s3", "s4", "s5", "s6", "s7",
-            "t8", "t9",
-            "ko", "k1",
-            "gp", "sp", "fp", "ra",
-        };
-
         public IEnumerable<Message> Messages => messages;
         public IReadOnlyDictionary<string, uint> Labels => labels;
 
@@ -673,7 +661,7 @@ namespace Mips.Assembler
             {
                 code.MoveNext();
             }
-            if (TryRead0x())
+            if (TryRead0X())
             {
                 numberStartIndex += 2;
                 style = NumberStyles.HexNumber;
@@ -709,7 +697,7 @@ namespace Mips.Assembler
             return false;            
         }
 
-        public bool TryRead0x()
+        public bool TryRead0X()
         {
             var startIndex = code.Index;
             if (code.Current == '0'
@@ -755,8 +743,8 @@ namespace Mips.Assembler
                 {
                     if (code.MoveNext() && code.MoveNext())
                     {
-                        string reference = code[(startIndex + 1)..(startIndex + 3)];
-                        int index = Array.IndexOf(registerNames, reference);
+                        string reference = code[(startIndex + 1)..(startIndex + 3)].ToLower();
+                        int index = Array.IndexOf(Constants.RegisterNames, reference);
                         if (index != -1)
                         {
                             register = index;

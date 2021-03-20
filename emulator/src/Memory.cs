@@ -23,7 +23,9 @@ namespace Mips.Emulator
         /// </summary>
         private const int nPages = 1024 * 4;
 
-        private byte[][] pages;
+        private uint largestWrittenAddress;
+
+        private readonly byte[][] pages;
 
         /// <summary>
         /// Access a byte in memory by address.
@@ -40,6 +42,10 @@ namespace Mips.Emulator
             {
                 var (page, intIndex) = GetAndAllocPage(index);
                 pages[page][intIndex] = value;
+                if (index > largestWrittenAddress)
+                {
+                    largestWrittenAddress = index;
+                }
             }
         }
 
@@ -50,6 +56,12 @@ namespace Mips.Emulator
         {
             pages = new byte[nPages][];
         }
+
+        /// <summary>
+        /// Returns <see langword="true"/> if <paramref name="index"/> has definitely
+        /// not been written to since the last memory reset.
+        /// </summary>
+        internal bool IsUntouched(uint index) => index > largestWrittenAddress;
 
         /// <summary>
         /// Resets the entire memory to zero.
@@ -63,6 +75,7 @@ namespace Mips.Emulator
                     Array.Clear(pages[i], 0, pageSize);
                 }
             }
+            largestWrittenAddress = 0;
         }
 
         /// <summary>
@@ -79,10 +92,7 @@ namespace Mips.Emulator
         {
             int page = (int)(index / pageSize);
             int intIndex = (int)(index % pageSize);
-            if (pages[page] == null)
-            {
-                pages[page] = new byte[pageSize];
-            }
+            pages[page] ??= new byte[pageSize];
             return (page, intIndex);
         }
 
@@ -176,6 +186,10 @@ namespace Mips.Emulator
             for (int i = 0; i < 4; i++)
             {
                 pages[page][intIndex + i] = bytes[i];
+            }
+            if (index > largestWrittenAddress)
+            {
+                largestWrittenAddress = index;
             }
         }
     }
