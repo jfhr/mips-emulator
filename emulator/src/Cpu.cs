@@ -61,29 +61,21 @@ namespace Mips.Emulator
             if ((instruction & 0b1111_1100_0000_0000_0000_0000_0000_0000) == 0)
             {
                 // Use format R (register operation)
-                int rs = (int)(instruction & 0b0000_0011_1110_0000_0000_0000_0000_0000) >> 21;
-                int rt = (int)(instruction & 0b0000_0000_0001_1111_0000_0000_0000_0000) >> 16;
-                int rd = (int)(instruction & 0b0000_0000_0000_0000_1111_1000_0000_0000) >> 11;
-                int shamt = (int)(instruction & 0b0000_0000_0000_0000_0000_0111_1100_0000) >> 6;
-                uint function = instruction & 0b0000_0000_0000_0000_0000_0000_0011_1111;
+                OperationDecoder.DecodeFormatR(instruction, out int rs, out int rt, out int rd, out int shamt, out uint function);
                 ExecuteFormatR(rs, rt, rd, shamt, function);
             }
 
             else if ((instruction & 0b1111_1000_0000_0000_0000_0000_0000_0000) == 0b0000_1000_0000_0000_0000_0000_0000_0000)
             {
                 // Use format J (jump operation)
-                uint address = (instruction & 0b0000_0011_1111_1111_1111_1111_1111_1111);
-                bool link = (instruction & 0b0000_0100_0000_0000_0000_0000_0000_0000) != 0;
+                OperationDecoder.DecodeFormatJ(instruction, out uint address, out bool link);
                 ExecuteFormatJ(address, link);
             }
 
             else
             {
                 // Use format I (immediate operation)
-                uint opcode = (instruction & 0b1111_1100_0000_0000_0000_0000_0000_0000) >> 26;
-                int rs = (int)(instruction & 0b0000_0011_1110_0000_0000_0000_0000_0000) >> 21;
-                int rt = (int)(instruction & 0b0000_0000_0001_1111_0000_0000_0000_0000) >> 16;
-                uint value = instruction & 0b0000_0000_0000_0000_1111_1111_1111_1111;
+                OperationDecoder.DecodeFormatI(instruction, out uint opcode, out int rs, out int rt, out uint value);
                 ExecuteFormatI(opcode, rs, rt, value);
             }
 

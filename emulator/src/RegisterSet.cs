@@ -1,4 +1,6 @@
-﻿namespace Mips.Emulator
+﻿using System;
+
+namespace Mips.Emulator
 {
     public class RegisterSet
     {
@@ -21,6 +23,14 @@
         public RegisterSet()
         {
             reg = new uint[34];
+        }
+
+        /// <summary>
+        /// Set the value of all registers to 0.
+        /// </summary>
+        public void Reset()
+        {
+            Array.Clear(reg, 0, reg.Length);
         }
 
 
