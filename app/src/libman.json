@@ -1,0 +1,19 @@
+{
+  "version": "1.0",
+  "defaultProvider": "cdnjs",
+  "libraries": [
+    {
+      "library": "monaco-editor@0.23.0",
+      "destination": "wwwroot/monaco-editor/",
+      "files": [
+        "min/vs/editor/editor.main.js",
+        "min/vs/loader.min.js",
+        "min/vs/editor/editor.main.min.css",
+        "min/vs/editor/editor.main.nls.de.js",
+        "min/vs/base/worker/workerMain.min.js",
+        "min/vs/basic-languages/mips/mips.min.js",
+        "min/vs/base/browser/ui/codicons/codicon/codicon.ttf"
+      ]
+    }
+  ]
+}

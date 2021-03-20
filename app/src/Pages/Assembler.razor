@@ -1,0 +1,30 @@
+﻿<div class="row">
+    <div class="col-1"><h1>Code</h1></div>
+    <div class="col-11">
+        <button class="btn btn-primary" @onclick="Assemble" disabled="@(!IsDirty)">Assemble</button>
+    </div>
+</div>
+
+<div class="row">
+    <textarea id="monaco-container" class="col-12" @bind-value="Code" @bind-value:event="oninput"></textarea>
+</div>
+
+@code {
+    string Code
+    {
+        get => Runtime.Code;
+        set
+        {
+            Runtime.Code = value;
+            IsDirty = true;
+        }
+    }
+
+    bool IsDirty { get; set; }
+
+    private void Assemble()
+    {
+        Runtime.Assemble();
+        IsDirty = false;
+    }
+}

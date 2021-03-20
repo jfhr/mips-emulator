@@ -1,0 +1,110 @@
+﻿@inherits LayoutComponentBase
+@using System.IO;
+
+<main class="container-fluid">
+    <div class="row py-2">
+        <div class="col-6 col-sm-6 col-md-6 col-lg-6 col-xl-4">
+            <button class="btn btn-secondary" onclick="document.getElementById('openfileinput').click()" title="Upload file"><span class="oi oi-cloud-upload"></span></button>
+            <InputFile style="display:none" id="openfileinput" OnChange="OpenAssemblerFile"></InputFile>
+            <button class="btn btn-secondary" @onclick="SaveAssemblerFile" title="Download file"><span class="oi oi-cloud-download"></span></button>
+            <button class="btn btn-secondary" @onclick="Assemble" title="Assemble"><span class="oi oi-arrow-circle-right"></span></button>
+        </div>
+        <div class="col-6 col-sm-6 col-md-5 col-lg-5 col-xl-7">
+            <button class="btn btn-secondary" @onclick="RunOneCycle" title="Run one CPU cycle"><span class="oi oi-media-play"></span></button>
+            <button class="btn btn-secondary" @onclick="RunProgram" title="Run program"><span class="oi oi-media-skip-forward"></span></button>
+            <button class="btn btn-secondary" @onclick="Reset" title="Reset CPU and memory"><span class="oi oi-reload"></span></button>
+        </div>
+        <div class="col text-right">
+            <a class="link-secondary" href="https://github.com/jfhr/mips-emulator" target="_blank">View on Github</a>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-12 col-sm-12 col-md-6 col-lg-6 col-xl-4">
+            <textarea id="editor" @bind-value="Code" @bind-value:event="oninput"></textarea>
+        </div>
+        <div class="col-12 col-sm-12 col-md-2 col-lg-2 col-xl-1 mt-2 mt-md-0">
+            <table class="table table-sm table-bordered table-hover">
+                <tbody>
+                    @for (int i = 0; i < 32; i++)
+                    {
+                        <tr>
+                            <td>@Mips.Emulator.Constants.RegisterNames[i]</td>
+                            <td>@Runtime.Cpu.Registers[i]</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        <div class="col-12 col-sm-12 col-md-4 col-lg-4 col-xl-7">
+            <span>Placeholder for memory</span>
+        </div>
+    </div>
+    <div class="row py-2">
+        <div class="col-6 col-sm-6 col-md-6 col-lg-6 col-xl-4">
+            <table class="table table-sm table-hover">
+                <thead>
+                    <tr>
+                        <th>Line</th>
+                        <th>Message</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Runtime.AssemblerResult != null)
+                    {
+                        foreach (var msg in Runtime.AssemblerResult.Errors)
+                        {
+                            <tr>
+                                <td>@Runtime.CountLinesToIndex(msg.StartIndex)</td>
+                                <td>@(msg.Content)</td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+        <div class="col-6 col-sm-6 col-md-5 col-lg-5 col-xl-7">
+            Placeholder for CPU errors
+        </div>
+    </div>
+</main>
+
+@code {
+    string Code
+    {
+        get => Runtime.Code;
+        set => Runtime.Code = value;
+    }
+
+    async Task OpenAssemblerFile(InputFileChangeEventArgs e)
+    {
+        var stream = e.File.OpenReadStream();
+        var reader = new StreamReader(stream);
+        Code = await reader.ReadToEndAsync();
+    }
+
+    void SaveAssemblerFile()
+    {
+        // TODO
+    }
+
+    void Assemble()
+    {
+        Runtime.Assemble();
+    }
+
+    void RunOneCycle()
+    {
+        Runtime.Cpu.CycleOnce();
+    }
+
+    void RunProgram()
+    {
+        Runtime.Cpu.CycleUntilTerminate();
+    }
+
+    void Reset()
+    {
+        Runtime.Cpu.Memory.Reset();
+        Runtime.Cpu.Registers.Reset();
+    }
+}
