@@ -14,17 +14,17 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<ProjectReference Include="..\assembler\src\Mips.Assembler.csproj" />
-		<ProjectReference Include="..\emulator\src\Mips.Emulator.csproj" />
-	</ItemGroup>
-
-	<ItemGroup>
 		<None Include="NaivePrimalityTest.asm">
 			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
 		</None>
 		<None Include="StringLengthTest.asm">
 			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
 		</None>
+	</ItemGroup>
+
+	<ItemGroup>
+	  <ProjectReference Include="..\..\assembler\src\Mips.Assembler.csproj" />
+	  <ProjectReference Include="..\..\emulator\src\Mips.Emulator.csproj" />
 	</ItemGroup>
 
 </Project>

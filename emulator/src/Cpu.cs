@@ -29,6 +29,16 @@ namespace Mips.Emulator
         public uint Pc { get; private set; }
 
         /// <summary>
+        /// Reset the program counter, register set and memory.
+        /// </summary>
+        public void Reset()
+        {
+            Pc = 0;
+            Registers.Reset();
+            Memory.Reset();
+        }
+
+        /// <summary>
         /// Runs Cpu cycles until the program terminates.
         /// </summary>
         public void CycleUntilTerminate()
