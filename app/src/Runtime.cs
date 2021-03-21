@@ -18,24 +18,5 @@ namespace Mips.App
         }
 
         public static void Assemble() => AssemblerResult = MipsAsm.Assemble(Code, Memory);
-
-        /// <summary>
-        /// Returns the number of newlines that occur before the given index inside the code.
-        /// </summary>
-        public static int CountLinesToIndex(int index)
-        {
-            int lines = 0;
-            int i = -1;
-            while (true)
-            {
-                i = Code.IndexOf('\n', i + 1);
-                if (i == -1 || i > index)
-                {
-                    break;
-                }
-                lines++;
-            }
-            return lines;
-        }
     }
 }

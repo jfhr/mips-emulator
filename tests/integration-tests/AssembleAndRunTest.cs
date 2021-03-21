@@ -96,8 +96,7 @@ namespace Mips.IntegrationTest
             {
                 var message = string.Join(", ", errors.Select(x =>
                 {
-                    var affectedCode = code[x.StartIndex..x.EndIndex];
-                    return $"{x.Content} at {affectedCode}";
+                    return $"{x.Content} at {x.LineNumber}";
                 }));
                 Assert.Fail(message);
             }

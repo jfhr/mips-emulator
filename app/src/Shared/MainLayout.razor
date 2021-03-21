@@ -54,7 +54,7 @@
                         foreach (var msg in Runtime.AssemblerResult.Errors)
                         {
                             <tr>
-                                <td>@Runtime.CountLinesToIndex(msg.StartIndex)</td>
+                                <td>@(msg.LineNumber)</td>
                                 <td>@(msg.Content)</td>
                             </tr>
                         }

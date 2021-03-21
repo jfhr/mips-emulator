@@ -73,7 +73,7 @@ namespace Mips.Assembler
             // If there's still more to read, but nothing matches, it must be a syntax error
             if (code.MoveNext())
             {
-                AddError(code.Index, code.Length - 1, Resources.SyntaxError);
+                AddError(Resources.SyntaxError);
             }
         }
 
@@ -110,12 +110,12 @@ namespace Mips.Assembler
                     };
                     if (success)
                     {
-                        AddInfo(startIndex, code.Index, info.Help);
+                        AddInfo(info.Help);
                         return true;
                     }
                     else
                     {
-                        AddError(startIndex, code.Index, Resources.SyntaxError);
+                        AddError(Resources.SyntaxError);
                     }
                 }
             }
@@ -152,7 +152,7 @@ namespace Mips.Assembler
                 }
                 else
                 {
-                    AddError(startIndex, code.Index, Resources.SyntaxError);
+                    AddError(Resources.SyntaxError);
                 }
             }
             code.MoveTo(startIndex);
@@ -380,7 +380,7 @@ namespace Mips.Assembler
                 && TryReadComma()
                 && TryReadAndLookupLabel(out uint targetAddress, out string labelName))
             {
-                uint offset = CalculateBranchOffset(targetAddress, startIndex, labelName);
+                uint offset = CalculateBranchOffset(targetAddress, labelName);
                 uint ins = OperationEncoder.EncodeFormatI(opcode, rs, rt, offset);
                 WriteWord(ins);
                 return true;
@@ -399,7 +399,7 @@ namespace Mips.Assembler
                 && TryReadComma()
                 && TryReadAndLookupLabel(out uint targetAddress, out string labelName))
             {
-                uint offset = CalculateBranchOffset(targetAddress, startIndex, labelName);
+                uint offset = CalculateBranchOffset(targetAddress, labelName);
                 uint ins = OperationEncoder.EncodeFormatI(opcode, rs, 0, offset);
                 WriteWord(ins);
                 return true;
@@ -417,7 +417,7 @@ namespace Mips.Assembler
             if (TryReadAndLookupLabel(out uint targetAddress, out string labelName))
             {
                 // b is implemented as beq $0,$0
-                uint offset = CalculateBranchOffset(targetAddress, startIndex, labelName);
+                uint offset = CalculateBranchOffset(targetAddress, labelName);
                 uint ins = OperationEncoder.EncodeFormatI(Opcodes.Beq, 0, 0, offset);
                 WriteWord(ins);
                 return true;
@@ -571,7 +571,7 @@ namespace Mips.Assembler
                 }
                 else
                 {
-                    AddError(startIndex, code.Index, Resources.LabelNotDefined, labelName);
+                    AddError(Resources.LabelNotDefined, labelName);
                 }
             }
             labelAddress = 0u;
@@ -591,7 +591,7 @@ namespace Mips.Assembler
                     code.MoveNext();
                     if (!secondPass)
                     {
-                        DefineLabel(startIndex, code.Index, name);
+                        DefineLabel(name);
                     }
                     return true;
                 }
@@ -640,7 +640,7 @@ namespace Mips.Assembler
                 {
                     return true;
                 }
-                AddError(startIndex, code.Index, Resources.UnsignedOverflow, number, bits);
+                AddError(Resources.UnsignedOverflow, number, bits);
             }
 
             code.MoveTo(startIndex);
@@ -679,7 +679,7 @@ namespace Mips.Assembler
                 {
                     return true;
                 }
-                AddError(startIndex, code.Index, Resources.SignedOverflow, number, bits);
+                AddError(Resources.SignedOverflow, number, bits);
             }
             // In case the value is too large for an int, but fits in a uint,
             // we then cast it (unchecked) to an int
@@ -690,7 +690,7 @@ namespace Mips.Assembler
                     value = unchecked((int)unsignedValue);
                     return true;
                 }
-                AddError(startIndex, code.Index, Resources.UnsignedOverflow, number, bits);
+                AddError(Resources.UnsignedOverflow, number, bits);
             }
             code.MoveTo(startIndex);
             value = 0;
@@ -894,13 +894,13 @@ namespace Mips.Assembler
         /// Calculate the offset from the current memory address to <paramref name="targetAddress"/> 
         /// for branch instructions.
         /// </summary>
-        private uint CalculateBranchOffset(uint targetAddress, int startIndex, string labelName)
+        private uint CalculateBranchOffset(uint targetAddress, string labelName)
         {
             // subtract 4 bc the pc is incremented before the instruction is executed
             int offset = (int)(targetAddress - memoryAddress) - 4;
             if (offset < short.MinValue || offset > short.MaxValue)
             {
-                AddError(startIndex, code.Index, Resources.BranchTooFarAwayFromLabel, labelName);
+                AddError(Resources.BranchTooFarAwayFromLabel, labelName);
             }
 
             // return value as unsigned 16-bit
@@ -955,11 +955,11 @@ namespace Mips.Assembler
         /// <summary>
         /// Add a label definition for the current memory address.
         /// </summary>
-        public void DefineLabel(int startIndex, int endIndex, string name)
+        public void DefineLabel(string name)
         {
             if (labels.ContainsKey(name))
             {
-                AddError(startIndex, endIndex, Resources.LabelDefinedTwice, name);
+                AddError(Resources.LabelDefinedTwice, name);
             }
             else
             {
@@ -970,7 +970,7 @@ namespace Mips.Assembler
         /// <summary>
         /// Add an error message.
         /// </summary>
-        public void AddError(int startIndex, int endIndex, string message, params object[] args)
+        public void AddError(string message, params object[] args)
         {
             if (args.Length != 0)
             {
@@ -981,20 +981,20 @@ namespace Mips.Assembler
             // We still go through the rest of the code to create error and info messages.
             memory.Reset();
             writeEnable = false;
-            messages.Add(new Message(startIndex, endIndex, true, message));
+            messages.Add(new Message(code.LineNumber, true, message));
         }
-
+                
         /// <summary>
         /// Add an info (syntax help) message.
         /// </summary>
-        public void AddInfo(int startIndex, int endIndex, string message, params object[] args)
+        public void AddInfo(string message, params object[] args)
         {
             if (args.Length != 0)
             {
                 message = string.Format(message, args);
             }
 
-            messages.Add(new Message(startIndex, endIndex, false, message));
+            messages.Add(new Message(code.LineNumber, false, message));
         }
 
         /// <summary>
