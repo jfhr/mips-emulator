@@ -23,7 +23,9 @@ namespace Mips.Assembler
             }
         }
 
-        public int Index { get; set; } = -1;
+        public int Index { get; private set; } = -1;
+        public int LineNumber { get; private set; } = -1;
+
         public int Length => text.Length;
 
         public StringEnumerator(string text)
@@ -35,15 +37,66 @@ namespace Mips.Assembler
         {
             if (Index < text.Length)
             {
+                if (Index == -1)
+                {
+                    LineNumber++;
+                }
+                else if (Current == '\n')
+                {
+                    LineNumber++;
+                }
                 Index++;
                 return true;
             }
             return false;
         }
 
+        public bool MovePrevious()
+        {
+            if (Index > -1)
+            {
+                Index--;
+                if (Index == -1)
+                {
+                    LineNumber--;
+                }
+                else if (Current == '\n')
+                {
+                    LineNumber--;
+                }
+                return true;
+            }
+            return false;
+        }
+
+        public bool MoveTo(int target)
+        {
+            if (target < -1 || target >= text.Length)
+            {
+                return false;
+            }
+            
+            if (target == -1)
+            {
+                Reset();
+                return true;
+            }
+
+            while (Index < target)
+            {
+                MoveNext();
+            }
+            while (Index > target)
+            {
+                MovePrevious();
+            }
+            return true;
+        }
+
         public void Reset()
         {
             Index = -1;
+            LineNumber = -1;
         }
     }
 }

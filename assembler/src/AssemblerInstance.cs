@@ -120,7 +120,7 @@ namespace Mips.Assembler
                 }
             }
 
-            code.Index = startIndex;
+            code.MoveTo(startIndex);
             return false;
         }
 
@@ -155,7 +155,7 @@ namespace Mips.Assembler
                     AddError(startIndex, code.Index, Resources.SyntaxError);
                 }
             }
-            code.Index = startIndex;
+            code.MoveTo(startIndex);
             return false;
         }
 
@@ -170,7 +170,7 @@ namespace Mips.Assembler
                 WriteBytes(new byte[value]);
                 return true;
             }
-            code.Index = startIndex;
+            code.MoveTo(startIndex);
             return false;
         }
 
@@ -185,7 +185,7 @@ namespace Mips.Assembler
                 WriteWord(unchecked((uint)value));
                 return true;
             }
-            code.Index = startIndex;
+            code.MoveTo(startIndex);
             return false;
         }
 
@@ -232,7 +232,7 @@ namespace Mips.Assembler
                 WriteWord(ins);
                 return true;
             }
-            code.Index = startIndex;
+            code.MoveTo(startIndex);
             return false;
         }
 
@@ -250,7 +250,7 @@ namespace Mips.Assembler
                 WriteWord(ins);
                 return true;
             }
-            code.Index = startIndex;
+            code.MoveTo(startIndex);
             return false;
         }
 
@@ -270,7 +270,7 @@ namespace Mips.Assembler
                 WriteWord(ins);
                 return true;
             }
-            code.Index = startIndex;
+            code.MoveTo(startIndex);
             return false;
         }
 
@@ -291,7 +291,7 @@ namespace Mips.Assembler
                 WriteWord(ins);
                 return true;
             }
-            code.Index = startIndex;
+            code.MoveTo(startIndex);
             return false;
         }
 
@@ -307,7 +307,7 @@ namespace Mips.Assembler
                 WriteWord(ins);
                 return true;
             }
-            code.Index = startIndex;
+            code.MoveTo(startIndex);
             return false;
         }
 
@@ -326,7 +326,7 @@ namespace Mips.Assembler
                 WriteWord(ins);
                 return true;
             }
-            code.Index = startIndex;
+            code.MoveTo(startIndex);
             return false;
         }
 
@@ -346,7 +346,7 @@ namespace Mips.Assembler
                 WriteWord(ins);
                 return true;
             }
-            code.Index = startIndex;
+            code.MoveTo(startIndex);
             return false;
         }
 
@@ -364,7 +364,7 @@ namespace Mips.Assembler
                 WriteWord(ins);
                 return true;
             }
-            code.Index = startIndex;
+            code.MoveTo(startIndex);
             return false;
         }
 
@@ -385,7 +385,7 @@ namespace Mips.Assembler
                 WriteWord(ins);
                 return true;
             }
-            code.Index = startIndex;
+            code.MoveTo(startIndex);
             return false;
         }
 
@@ -404,7 +404,7 @@ namespace Mips.Assembler
                 WriteWord(ins);
                 return true;
             }
-            code.Index = startIndex;
+            code.MoveTo(startIndex);
             return false;
         }
 
@@ -422,7 +422,7 @@ namespace Mips.Assembler
                 WriteWord(ins);
                 return true;
             }
-            code.Index = startIndex;
+            code.MoveTo(startIndex);
             return false;
         }
 
@@ -440,7 +440,7 @@ namespace Mips.Assembler
                 WriteWord(ins);
                 return true;
             }
-            code.Index = startIndex;
+            code.MoveTo(startIndex);
             return false;
         }
 
@@ -457,7 +457,7 @@ namespace Mips.Assembler
                 WriteLoad32Instructions(reg, labelAddress);
                 return true;
             }
-            code.Index = startIndex;
+            code.MoveTo(startIndex);
             return false;
         }
 
@@ -474,7 +474,7 @@ namespace Mips.Assembler
                 WriteLoad32Instructions(reg, unchecked((uint)value));
                 return true;
             }
-            code.Index = startIndex;
+            code.MoveTo(startIndex);
             return false;
         }
 
@@ -491,7 +491,7 @@ namespace Mips.Assembler
                 WriteWord(ins);
                 return true;
             }
-            code.Index = startIndex;
+            code.MoveTo(startIndex);
             return false;
         }
 
@@ -596,7 +596,7 @@ namespace Mips.Assembler
                     return true;
                 }
             }
-            code.Index = startIndex;
+            code.MoveTo(startIndex);
             return false;
         }
 
@@ -643,7 +643,7 @@ namespace Mips.Assembler
                 AddError(startIndex, code.Index, Resources.UnsignedOverflow, number, bits);
             }
 
-            code.Index = startIndex;
+            code.MoveTo(startIndex);
             value = 0;
             return false;
         }
@@ -692,7 +692,7 @@ namespace Mips.Assembler
                 }
                 AddError(startIndex, code.Index, Resources.UnsignedOverflow, number, bits);
             }
-            code.Index = startIndex;
+            code.MoveTo(startIndex);
             value = 0;
             return false;            
         }
@@ -706,7 +706,7 @@ namespace Mips.Assembler
             {
                 return true;
             }
-            code.Index = startIndex;
+            code.MoveTo(startIndex);
             return false;
         }
 
@@ -754,7 +754,7 @@ namespace Mips.Assembler
                 }
             }
 
-            code.Index = startIndex;
+            code.MoveTo(startIndex);
             register = -1;
             return false;
         }
@@ -771,7 +771,7 @@ namespace Mips.Assembler
                 return true;
             }
             name = null;
-            code.Index = startIndex;
+            code.MoveTo(startIndex);
             return false;
         }
 
@@ -803,7 +803,7 @@ namespace Mips.Assembler
                 TryReadWhitespace();
                 return true;
             }
-            code.Index = startIndex;
+            code.MoveTo(startIndex);
             return false;
         }
 
