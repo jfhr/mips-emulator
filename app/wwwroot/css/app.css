@@ -1,17 +1,5 @@
-﻿@import url('open-iconic/font/css/open-iconic-bootstrap.min.css');
-
-html, body {
-    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-}
-
-a, .btn-link {
-    color: #0366d6;
-}
-
-.btn-primary {
-    color: #fff;
-    background-color: #1b6ec2;
-    border-color: #1861ac;
+﻿body>#app {
+    font-family: Consolas, monospace;
 }
 
 .content {
@@ -31,6 +19,7 @@ a, .btn-link {
 }
 
 #blazor-error-ui {
+    color: black;
     background: lightyellow;
     bottom: 0;
     box-shadow: 0 -1px 2px rgba(0, 0, 0, 0.2);
@@ -50,6 +39,5 @@ a, .btn-link {
 }
 
 #monaco-container {
-    width: 800px;
-    height: 800px;
+    height: 100%;
 }

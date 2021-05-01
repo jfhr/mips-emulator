@@ -1,19 +1,11 @@
 ﻿@inherits LayoutComponentBase
 
 <div class="page">
-    <nav class="sidebar">
-        <NavMenu />
-    </nav>
+    <NavMenu/>
 
     <main class="main">
-        <div class="top-row px-4">
-            <a href="https://github.com/jfhr/mips-emulator" target="_blank" class="ml-md-auto">View on GitHub</a>
-        </div>
-
-        <div class="content px-4">
-            <div class="container-fluid">
-                @Body
-            </div>
+        <div class="container-fluid">
+            @Body
         </div>
     </main>
 </div>

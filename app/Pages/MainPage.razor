@@ -1,0 +1,94 @@
+﻿@using BlazorMonaco
+
+<div class="row">
+    <div class="col-6">
+        <MonacoEditor @ref="_editor"
+                      ConstructionOptions="EditorConstructionOptions"
+                      Id="monaco-container">
+        </MonacoEditor>
+    </div>
+    <div class="col-6">
+        <div>
+            <button class="btn btn-primary m-2" @onclick="Assemble">Assemble</button>
+            <button class="btn btn-primary m-2" @onclick="RunProgram">Run program</button>
+            <button class="btn btn-secondary m-2" @onclick="RunOneCycle">Run one cycle</button>
+            @if (IsRunning)
+            {
+            <span class="text-info">Running</span>
+            }
+        </div>
+        <div class="row">
+            <div class="col-2">
+                <table class="table table-sm table-bordered table-hover">
+                    <tbody>
+                        @for (int i = 0; i < 32; i++)
+                        {
+                            <tr>
+                                <td>@Emulator.Constants.RegisterNames[i]</td>
+                                <td class="@Class(Runtime.Cpu.Registers[i])">@Hex(Runtime.Cpu.Registers[i])</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+            <div class="col-10">
+                <table class="table table-sm table-bordered table-hover">
+                    <tbody>
+                        @for (uint i = 0; i < 64; i++)
+                        {
+                            <tr>
+                                @for (uint j = 0; j < 8; j++)
+                                {
+                                    <td class="@Class(Runtime.Memory.LoadWord(64 * i + 8 * j))">@Hex(Runtime.Memory.LoadWord(64 * i + 8 * j))</td>
+                                }
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+@code {
+
+    MonacoEditor _editor { get; set; }
+    bool IsRunning { get; set; }
+
+    private async Task Assemble()
+    {
+        IsRunning = true;
+        Runtime.Code = await _editor.GetValue();
+        Runtime.Cpu.Reset();
+        Runtime.Assemble();
+        IsRunning = false;
+    }
+
+    private void RunProgram() 
+    {
+        IsRunning = true;
+        Runtime.Cpu.CycleUntilTerminate();
+        IsRunning = false;
+    }
+    private void RunOneCycle() 
+    {
+        IsRunning = true;
+        Runtime.Cpu.CycleOnce();
+        IsRunning = false;
+    }
+
+    private StandaloneEditorConstructionOptions EditorConstructionOptions(MonacoEditor editor)
+    {
+        return new()
+        {
+            AutomaticLayout = true,
+            Language = "mips",
+            Value = "li $at,123",
+            Theme = "vs-dark",
+        };
+    }
+
+    private string Hex(uint i) => $"0x{i:X8}";
+    private string Class(uint i) => i == 0 ? "text-muted" : "";
+}

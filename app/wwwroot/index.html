@@ -1,38 +1,39 @@
 ﻿<!DOCTYPE html>
-<html>
+<html lang="en">
 
 <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
     <title>MIPS32 Assembler + Emulator</title>
-    <base href="." />
-    <link href="css/bootstrap/bootstrap.min.css" rel="stylesheet" />
-    <link href="css/app.css" rel="stylesheet" />
-    <link href="Mips.App.styles.css" rel="stylesheet" />
-    <link href="manifest.json" rel="manifest" />
-    <link rel="apple-touch-icon" sizes="512x512" href="icon-512.png" />
+    <base href="."/>
+    <link href="css/app.css" rel="stylesheet"/>
+    <link href="manifest.json" rel="manifest"/>
+
+    <link rel="stylesheet"
+          data-name="vs/editor/editor.main"
+          href="monaco-editor/min/vs/editor/editor.main.css"
+    />
+
+    <link rel="stylesheet" href="https://jfhr.de/assets/darkly.bootstrap.min.css">
+    <link rel="stylesheet" href="https://jfhr.de/assets/bootstrap-icons.css">
 </head>
 
 <body>
-    <div id="app">Loading...</div>
+<div id="app">Loading...</div>
 
-    <div id="blazor-error-ui">
-        An unhandled error has occurred.
-        <a href="" class="reload">Reload</a>
-        <a class="dismiss">🗙</a>
-    </div>
-    <script src="_framework/blazor.webassembly.js"></script>
-    <script src="monaco-editor/min/vs/loader.min.js"></script>
-    <script>
-        require.config({ paths: { vs: 'monaco-editor/min/vs' } });
+<div id="blazor-error-ui">
+    An unhandled error has occurred.
+    <a href="" class="reload">Reload</a>
+    <a class="dismiss">🗙</a>
+</div>
 
-        require(['vs/editor/editor.main'], function () {
-            var editor = monaco.editor.create(document.getElementById('monaco-container'), {
-                value: '# Your code goes here',
-                language: 'mips'
-            });
-        });
-    </script>
+<script src="_content/BlazorMonaco/lib/monaco-editor/min/vs/loader.js"></script>
+<script>require.config({ paths: { 'vs': '_content/BlazorMonaco/lib/monaco-editor/min/vs' } });</script>
+<script src="_content/BlazorMonaco/lib/monaco-editor/min/vs/editor/editor.main.js"></script>
+<script src="_content/BlazorMonaco/jsInterop.js"></script>
+
+<script src="_framework/blazor.webassembly.js"></script>
+
 </body>
 
 </html>
