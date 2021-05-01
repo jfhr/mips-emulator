@@ -9,9 +9,9 @@
     </div>
     <div class="col-6">
         <div>
-            <button class="btn btn-primary m-2" @onclick="Assemble">Assemble</button>
-            <button class="btn btn-primary m-2" @onclick="RunProgram">Run program</button>
-            <button class="btn btn-secondary m-2" @onclick="RunOneCycle">Run one cycle</button>
+            <button class="btn btn-primary m-2" @onclick="Assemble" disabled="@IsRunning">Assemble</button>
+            <button class="btn btn-primary m-2" @onclick="RunProgramAsync" disabled="@IsRunning">Run program</button>
+            <button class="btn btn-secondary m-2" @onclick="RunOneCycle" disabled="@IsRunning">Run one cycle</button>
             @if (IsRunning)
             {
             <span class="text-info">Running</span>
@@ -58,24 +58,20 @@
 
     private async Task Assemble()
     {
-        IsRunning = true;
         Runtime.Code = await _editor.GetValue();
         Runtime.Cpu.Reset();
         Runtime.Assemble();
-        IsRunning = false;
     }
 
-    private void RunProgram() 
+    private async Task RunProgramAsync() 
     {
         IsRunning = true;
-        Runtime.Cpu.CycleUntilTerminate();
+        await Runtime.Cpu.CycleUntilTerminateAsync();
         IsRunning = false;
     }
     private void RunOneCycle() 
     {
-        IsRunning = true;
         Runtime.Cpu.CycleOnce();
-        IsRunning = false;
     }
 
     private StandaloneEditorConstructionOptions EditorConstructionOptions(MonacoEditor editor)

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading.Tasks;
 
 namespace Mips.Emulator
 {
@@ -36,6 +37,14 @@ namespace Mips.Emulator
             Registers.Reset();
             Memory.Reset();
             Pc = 0;
+        }
+
+        /// <summary>
+        /// Runs Cpu cycles until the program terminates. Async variant.
+        /// </summary>
+        public async Task CycleUntilTerminateAsync()
+        {
+            await Task.Run(CycleUntilTerminate);
         }
 
         /// <summary>
