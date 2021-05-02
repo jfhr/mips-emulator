@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace Mips.Assembler
 {
@@ -127,10 +128,24 @@ namespace Mips.Assembler
             return instance;
         }
 
+        public static async Task<IAssemblerResult> AssembleAsync(string code, IMemory target)
+        {
+            var instance = new AssemblerInstance(code, target);
+            await Task.Run(() => instance.Assemble());
+            return instance;
+        }
+
         public static IDisassemblerResult Disassemble(byte[] binary)
         {
             var instance = new DisassemblerInstance(binary);
             instance.Disassemble();
+            return instance;
+        }
+
+        public static async Task<IDisassemblerResult> DisassembleAsync(byte[] binary)
+        {
+            var instance = new DisassemblerInstance(binary);
+            await Task.Run(() => instance.Disassemble());
             return instance;
         }
     }
@@ -141,8 +156,10 @@ namespace Mips.Assembler
         private readonly Stream stream;
         private readonly byte[] wordBuffer = new byte[4];
         private readonly List<Message> errors = new();
-        private readonly Dictionary<string, uint> labels = new();
+        private readonly Dictionary<uint, string> labels = new();
         private int labelCount;
+
+        private uint writeAddress;
 
         public DisassemblerInstance(byte[] binary)
         {
@@ -155,32 +172,64 @@ namespace Mips.Assembler
 
         public void Disassemble()
         {
-            TryReadInstruction();
-        }
+            int lineCount = 0;
+            string line;
 
-        public bool TryReadInstruction()
-        {
-            if (TryReadWord(out uint word))
+            while (TryReadInstruction(out _) || TryReadAsWord(out _))
             {
-                if ((word & 0b1111_1100_0000_0000_0000_0000_0000_0000) == 0)
+                lineCount++;
+            }
+
+            // Just an estimate of the needed capacity, this helps
+            // reduce memory allocations during the second pass
+            code.EnsureCapacity(lineCount * 8);
+            stream.Seek(0, SeekOrigin.Begin);
+
+
+            while (TryReadInstruction(out line) || TryReadAsWord(out line))
+            {
+                code.AppendLine(line);
+                writeAddress += 4;
+                if (labels.TryGetValue(writeAddress, out string labelName))
                 {
-                    return TryProcessFormatR(word);
-                }
-                else
-                {
-                    return TryProcessFormatJOrI(word);
+                    code.AppendLine($"{labelName}:");
                 }
             }
+
+            // If less than one whole word is remaining, it must be individual bytes
+            ReadRemainingAsBytes(out line);
+            code.Append(line);
+        }
+
+        public bool TryReadInstruction(out string output)
+        {
+            long startPosition = stream.Position;
+
+            if (TryGetWord(out uint word))
+            {
+                if (((word & 0b1111_1100_0000_0000_0000_0000_0000_0000) == 0) && TryProcessFormatR(word, out output))
+                {
+                    return true;
+                }
+                else if (TryProcessFormatJOrI(word, out output))
+                {
+                    return true;
+                }
+            }
+
+            stream.Seek(startPosition, SeekOrigin.Begin);
+            output = default;
             return false;
         }
 
-        public bool TryProcessFormatR(uint word)
+        public bool TryProcessFormatR(uint word, out string output)
         {
             var function = word & 0b0000_0000_0000_0000_0000_0000_0011_1111;
             var ins = MipsAsm.Instructions
                 .Where(x => (x.Value.Type & MipsAsm.InstructionSyntaxType.FormatR) != 0)
                 .FirstOrDefault(x => x.Value.FunctionOrOpcode == function);
 
+            output = default;
             if (ins.Value == null)
             {
                 return false;
@@ -188,77 +237,83 @@ namespace Mips.Assembler
 
             return ins.Value.Type switch
             {
-                MipsAsm.InstructionSyntaxType.ArithLog => TryProcessArithLog(word, ins.Key),
-                MipsAsm.InstructionSyntaxType.DivMult => TryProcessDivMult(word, ins.Key),
-                MipsAsm.InstructionSyntaxType.Shift => TryProcessShift(word, ins.Key),
-                MipsAsm.InstructionSyntaxType.ShiftV => TryProcessShiftV(word, ins.Key),
-                MipsAsm.InstructionSyntaxType.RJumpOrMove => TryProcessRJumpOrMove(word, ins.Key),
+                MipsAsm.InstructionSyntaxType.ArithLog => TryProcessArithLog(word, ins.Key, out output),
+                MipsAsm.InstructionSyntaxType.DivMult => TryProcessDivMult(word, ins.Key, out output),
+                MipsAsm.InstructionSyntaxType.Shift => TryProcessShift(word, ins.Key, out output),
+                MipsAsm.InstructionSyntaxType.ShiftV => TryProcessShiftV(word, ins.Key, out output),
+                MipsAsm.InstructionSyntaxType.RJumpOrMove => TryProcessRJumpOrMove(word, ins.Key, out output),
                 _ => false,
             };
         }
 
-        public bool TryProcessArithLog(uint word, string name)
+        public bool TryProcessArithLog(uint word, string name, out string output)
         {
             OperationDecoder.DecodeFormatR(word, out int rs, out int rt, out int rd, out int shamt, out uint _);
             if (shamt != 0)
             {
+                output = default;
                 return false;
             }
-            code.AppendLine($"{name} ${Constants.RegisterNames[rd]},${Constants.RegisterNames[rs]},${Constants.RegisterNames[rt]}");
+            output = $"{name} ${Constants.RegisterNames[rd]},${Constants.RegisterNames[rs]},${Constants.RegisterNames[rt]}";
             return true;
         }
 
-        public bool TryProcessDivMult(uint word, string name)
+        public bool TryProcessDivMult(uint word, string name, out string output)
         {
             OperationDecoder.DecodeFormatR(word, out int rs, out int rt, out int rd, out int shamt, out uint _);
             if (shamt != 0 || rd != 0)
             {
+                output = default;
                 return false;
             }
-            code.AppendLine($"{name} ${Constants.RegisterNames[rs]},${Constants.RegisterNames[rt]}");
+            output = $"{name} ${Constants.RegisterNames[rs]},${Constants.RegisterNames[rt]}";
             return true;
         }
 
-        public bool TryProcessShift(uint word, string name)
+        public bool TryProcessShift(uint word, string name, out string output)
         {
             OperationDecoder.DecodeFormatR(word, out int rs, out int rt, out int rd, out int shamt, out uint _);
             if (rs != 0)
             {
+                output = default;
                 return false;
             }
-            code.AppendLine($"{name} ${Constants.RegisterNames[rd]},${Constants.RegisterNames[rt]},{shamt}");
+            output = $"{name} ${Constants.RegisterNames[rd]},${Constants.RegisterNames[rt]},{shamt}";
             return true;
         }
 
-        public bool TryProcessShiftV(uint word, string name)
+        public bool TryProcessShiftV(uint word, string name, out string output)
         {
             OperationDecoder.DecodeFormatR(word, out int rs, out int rt, out int rd, out int shamt, out uint _);
             if (shamt != 0)
             {
+                output = default;
                 return false;
             }
-            code.AppendLine($"{name} ${Constants.RegisterNames[rd]},${Constants.RegisterNames[rt]},${Constants.RegisterNames[rs]}");
+            output = $"{name} ${Constants.RegisterNames[rd]},${Constants.RegisterNames[rt]},${Constants.RegisterNames[rs]}";
             return true;
         }
 
-        public bool TryProcessRJumpOrMove(uint word, string name)
+        public bool TryProcessRJumpOrMove(uint word, string name, out string output)
         {
             OperationDecoder.DecodeFormatR(word, out int rs, out int rt, out int rd, out int shamt, out uint _);
             if (rd != 0 || rt != 0 || shamt != 0)
             {
+                output = default;
                 return false;
             }
-            code.AppendLine($"{name} ${Constants.RegisterNames[rs]}");
+            output = $"{name} ${Constants.RegisterNames[rs]}";
             return true;
         }
 
-        public bool TryProcessFormatJOrI(uint word)
+        public bool TryProcessFormatJOrI(uint word, out string output)
         {
             var opcode = (word & 0b1111_1100_0000_0000_0000_0000_0000_0000) >> 26;
             var ins = MipsAsm.Instructions
                 .Where(x => (x.Value.Type & MipsAsm.InstructionSyntaxType.FormatR) == 0)
                 .FirstOrDefault(x => x.Value.FunctionOrOpcode == opcode);
 
+            output = default;
             if (ins.Value == null)
             {
                 return false;
@@ -266,58 +321,59 @@ namespace Mips.Assembler
 
             return ins.Value.Type switch
             {
-                MipsAsm.InstructionSyntaxType.ArithLogI => TryProcessArithLogI(word, ins.Key),
-                MipsAsm.InstructionSyntaxType.Branch => TryProcessBranch(word, ins.Key),
-                MipsAsm.InstructionSyntaxType.BranchZ => TryProcessBranchZ(word, ins.Key),
-                MipsAsm.InstructionSyntaxType.LoadStore => TryProcessLoadStore(word, ins.Key),
-                MipsAsm.InstructionSyntaxType.Jump => TryProcessJump(word, ins.Key),
+                MipsAsm.InstructionSyntaxType.ArithLogI => TryProcessArithLogI(word, ins.Key, out output),
+                MipsAsm.InstructionSyntaxType.Branch => TryProcessBranch(word, ins.Key, out output),
+                MipsAsm.InstructionSyntaxType.BranchZ => TryProcessBranchZ(word, ins.Key, out output),
+                MipsAsm.InstructionSyntaxType.LoadStore => TryProcessLoadStore(word, ins.Key, out output),
+                MipsAsm.InstructionSyntaxType.Jump => TryProcessJump(word, ins.Key, out output),
                 _ => false,
             };
         }
 
-        public bool TryProcessArithLogI(uint word, string name)
+        public bool TryProcessArithLogI(uint word, string name, out string output)
         {
             OperationDecoder.DecodeFormatI(word, out uint _, out int rs, out int rt, out uint value);
-            code.AppendLine($"{name} ${Constants.RegisterNames[rt]},${Constants.RegisterNames[rs]},{value}");
+            output = $"{name} ${Constants.RegisterNames[rt]},${Constants.RegisterNames[rs]},{value}";
             return true;
         }
 
-        public bool TryProcessBranch(uint word, string name)
+        public bool TryProcessBranch(uint word, string name, out string output)
         {
             OperationDecoder.DecodeFormatI(word, out uint _, out int rs, out int rt, out uint value);
             var labelName = AddLabelAndGetName(value);
-            code.AppendLine($"{name} ${Constants.RegisterNames[rs]},${Constants.RegisterNames[rt]},{labelName}");
+            output = $"{name} ${Constants.RegisterNames[rs]},${Constants.RegisterNames[rt]},{labelName}";
             return true;
         }
 
-        public bool TryProcessBranchZ(uint word, string name)
+        public bool TryProcessBranchZ(uint word, string name, out string output)
         {
             OperationDecoder.DecodeFormatI(word, out uint _, out int rs, out int rt, out uint value);
             if (rt != 0)
             {
+                output = default;
                 return false;
             }
             var labelName = AddLabelAndGetName(value);
-            code.AppendLine($"{name} ${Constants.RegisterNames[rs]},{labelName}");
+            output = $"{name} ${Constants.RegisterNames[rs]},{labelName}";
             return true;
         }
 
-        public bool TryProcessLoadStore(uint word, string name)
+        public bool TryProcessLoadStore(uint word, string name, out string output)
         {
             OperationDecoder.DecodeFormatI(word, out uint _, out int rs, out int rt, out uint value);
-            code.AppendLine($"{name} ${Constants.RegisterNames[rt]},{value}(${Constants.RegisterNames[rs]})");
+            output = $"{name} ${Constants.RegisterNames[rt]},{value}(${Constants.RegisterNames[rs]})";
             return true;
         }
 
-        public bool TryProcessJump(uint word, string name)
+        public bool TryProcessJump(uint word, string name, out string output)
         {
             OperationDecoder.DecodeFormatJ(word, out uint address, out bool _);
             var labelName = AddLabelAndGetName(address);
-            code.AppendLine($"{name} {labelName}");
+            output = $"{name} {labelName}";
             return true;
         }
 
-        public bool TryReadWord(out uint word)
+        public bool TryGetWord(out uint word)
         {
             var bytesRead = stream.Read(wordBuffer);
             if (bytesRead < 4)
@@ -331,9 +387,35 @@ namespace Mips.Assembler
 
         private string AddLabelAndGetName(uint address)
         {
-            var labelName = $"l{labelCount++}";
-            labels[labelName] = address;
-            return labelName;
+            if (labels.TryGetValue(address, out string name))
+            {
+                return name;
+            }
+
+            var newName = $"l{labelCount++}";
+            labels[address] = newName;
+            return newName;
+        }
+
+        public bool TryReadAsWord(out string output)
+        {
+            if (TryGetWord(out uint word))
+            {
+                output = $".word {word:X8}";
+                return true;
+            }
+            output = default;
+            return false;
+        }
+
+        public void ReadRemainingAsBytes(out string output)
+        {
+            output = "";
+            var bytesRead = stream.Read(wordBuffer);
+            for (int i = 0; i < bytesRead; i++)
+            {
+                output += $".word {wordBuffer[i]:X2}\n";
+            }
         }
     }
 
