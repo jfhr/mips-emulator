@@ -1,3 +1,45 @@
 ﻿@page "/"
+@inject Blazored.LocalStorage.ILocalStorageService localStorage;
 
-<MainPage/>
+<ul class="nav nav-tabs">
+    @for (int i = 0; i < TabManager.Tabs.Count; i++)
+    {
+        <li class="nav-item">
+            <span class="nav-link">
+                <a class="@TabClass(i)" href="#" @onclick="async () => await TabManager.SelectTabAsync(i)">Tab @(i + 1)</a>
+                <a href="#" @onclick="async () => await TabManager.CloseTabAsync(i)"><i class="bi bi-x"></i></a>
+            </span>
+        </li>
+    }
+    <li class="nav-item">
+        <a class="nav-link" href="#" @onclick="TabManager.AddTabAsync"><i class="bi bi-plus"></i></a>
+    </li>
+</ul>
+
+@for (int i = 0; i < TabManager.Tabs.Count; i++)
+{
+    <div class="@(i == TabManager.CurrentTabIndex ? "" : "d-none")">
+        <MainPage Id="@TabManager.Tabs[i].Id" />
+    </div>
+}
+
+@code {
+
+    private TabManager TabManager { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        TabManager = new(localStorage);
+        await TabManager.InitializeAsync();
+    }
+
+    private string TabClass(int index)
+    {
+        if (index == TabManager.CurrentTabIndex)
+        {
+            return "active";
+        }
+        return "";
+    }
+
+}

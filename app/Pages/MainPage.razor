@@ -1,4 +1,5 @@
 ﻿@using BlazorMonaco
+@inject Blazored.LocalStorage.ILocalStorageService localStorage
 
 <div class="row">
     <div class="col-6">
@@ -9,12 +10,12 @@
     </div>
     <div class="col-6">
         <div>
-            <button class="btn btn-primary m-2" @onclick="Assemble" disabled="@IsRunning">Assemble</button>
+            <button class="btn btn-primary m-2" @onclick="Assemble" disabled="@(IsRunning || IsAssembled)">Assemble</button>
             <button class="btn btn-primary m-2" @onclick="RunProgramAsync" disabled="@IsRunning">Run program</button>
             <button class="btn btn-secondary m-2" @onclick="RunOneCycle" disabled="@IsRunning">Run one cycle</button>
             @if (IsRunning)
             {
-            <span class="text-info">Running</span>
+                <span class="text-info">Running</span>
             }
         </div>
         <div class="row">
@@ -53,23 +54,29 @@
 
 @code {
 
+    [Parameter] public string Id { get; set; }
+
+    Runtime Runtime { get; set; }
     MonacoEditor _editor { get; set; }
     bool IsRunning { get; set; }
+    bool IsAssembled { get; set; }
 
     private async Task Assemble()
     {
         Runtime.Code = await _editor.GetValue();
-        Runtime.Cpu.Reset();
-        Runtime.Assemble();
+        await localStorage.SetItemAsStringAsync(Id, Runtime.Code);
+        await Runtime.Cpu.ResetAsync();
+        await Runtime.AssembleAsync();
+        IsAssembled = true;
     }
 
-    private async Task RunProgramAsync() 
+    private async Task RunProgramAsync()
     {
         IsRunning = true;
         await Runtime.Cpu.CycleUntilTerminateAsync();
         IsRunning = false;
     }
-    private void RunOneCycle() 
+    private void RunOneCycle()
     {
         Runtime.Cpu.CycleOnce();
     }
@@ -83,6 +90,12 @@
             Value = "li $at,123",
             Theme = "vs-dark",
         };
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        Runtime = new();
+        Runtime.Code = await localStorage.GetItemAsStringAsync(Id.ToString()) ?? string.Empty;
     }
 
     private string Hex(uint i) => $"0x{i:X8}";

@@ -1,21 +1,23 @@
 ﻿using Mips.Assembler;
 using Mips.Emulator;
+using System.Threading.Tasks;
 
 namespace Mips.App
 {
-    public static class Runtime
+    public class Runtime
     {
-        public static string Code { get; set; }
-        public static Cpu Cpu { get; }
-        public static IMemory Memory => Cpu.Memory;
-        public static RegisterSet RegisterSet => Cpu.Registers;
+        public string Code { get; set; }
+        public Cpu Cpu { get; }
+        public IMemory Memory => Cpu.Memory;
+        public RegisterSet RegisterSet => Cpu.Registers;
 
-        static Runtime()
+        public Runtime()
         {
             Code = string.Empty;
-            Cpu = new Cpu();
+            Cpu = new();
         }
 
-        public static void Assemble() => MipsAsm.Assemble(Code, Memory);
+        public void Assemble() => MipsAsm.Assemble(Code, Memory);
+        public async Task AssembleAsync() => await MipsAsm.AssembleAsync(Code, Memory);
     }
 }

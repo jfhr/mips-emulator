@@ -40,6 +40,14 @@ namespace Mips.Emulator
         }
 
         /// <summary>
+        /// Reset the program counter, register set, and memory. Async variant.
+        /// </summary>
+        public async Task ResetAsync()
+        {
+            await Task.Run(Reset);
+        }
+
+        /// <summary>
         /// Runs Cpu cycles until the program terminates. Async variant.
         /// </summary>
         public async Task CycleUntilTerminateAsync()
